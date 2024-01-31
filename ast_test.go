@@ -94,6 +94,7 @@ func Test_extractImport(t *testing.T) {
 					{Index: 2, Type: Comment, Value: "/* bar */"},
 				},
 			},
+			want1: 2,
 		},
 	}
 	for _, tt := range tests {
@@ -103,7 +104,7 @@ func Test_extractImport(t *testing.T) {
 			for i := range got {
 				assert(t, len(tt.want[i]), len(got[i]))
 				for j := range got[i] {
-					assert(t, *got[i][j], *tt.want[i][j])
+					assert(t, *tt.want[i][j], *got[i][j])
 				}
 			}
 

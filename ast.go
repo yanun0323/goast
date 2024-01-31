@@ -72,15 +72,17 @@ func ParseFile(path string) (*File, error) {
 	return file, nil
 }
 
-func combineComment(spans []string, idx int) (string, int) {
-	result := make([]string, 0, len(spans))
+func tryCombineComment(spans []string, idx int) (string, int) {
 	switch spans[idx] {
 	case "//":
+		result := make([]string, 0, len(spans))
 		for i := idx; i < len(spans); i++ {
 			result = append(result, spans[i])
 			idx = i
 		}
+		return strings.Join(result, " "), idx
 	case "/*":
+		result := make([]string, 0, len(spans))
 		for i := idx; i < len(spans); i++ {
 			result = append(result, spans[i])
 			idx = i
@@ -88,20 +90,19 @@ func combineComment(spans []string, idx int) (string, int) {
 				break
 			}
 		}
+		return strings.Join(result, " "), idx
+	default:
+		return spans[idx], idx
 	}
-	return strings.Join(result, " "), idx
 }
 
 func extractPackage(row string) []*unit {
 	result := []*unit{}
 	spans := strings.Split(row, " ")
 	idx := 0
+	span := ""
 	for i := 0; i < len(spans); i, idx = i+1, idx+1 {
-		span := spans[i]
-		switch spans[i] {
-		case "//", "/*":
-			span, i = combineComment(spans, i)
-		}
+		span, i = tryCombineComment(spans, i)
 		result = append(result, &unit{
 			Index: idx,
 			Type:  parsingType(span),
@@ -116,15 +117,21 @@ func extractImport(rows []string, idx int) ([][]*unit, int) {
 		result := []*unit{}
 		spans := strings.Split(row, " ")
 		idx := 0
+		span := ""
 		for i := 0; i < len(spans); i, idx = i+1, idx+1 {
-			span := spans[i]
-			switch spans[i] {
-			case "//", "/*":
-				span, i = combineComment(spans, i)
-			}
+			span, i = tryCombineComment(spans, i)
 			result = append(result, &unit{
 				Index: idx,
-				Type:  parsingType(span),
+				Type: parsingType(span, func(s string) (Type, bool) {
+					switch s[0] {
+					case '"':
+						return Raw, true
+					case '/':
+						return Comment, true
+					default:
+						return Keyword, true
+					}
+				}),
 				Value: span,
 			})
 		}
@@ -138,20 +145,13 @@ func extractImport(rows []string, idx int) ([][]*unit, int) {
 
 	result := [][]*unit{}
 	for i := idx + 1; i < len(rows); i++ {
-		row := strings.TrimSpace(rows[idx])
+		row := strings.TrimSpace(rows[i])
 		if len(row) == 0 {
 			continue
 		}
 
 		if row[0] == ')' {
 			break
-		}
-
-		if row[0] == '/' {
-			comments, index := extractComment(rows, i)
-			result = append(result, []*unit{&comments})
-			i = index
-			continue
 		}
 
 		result = append(result, fnRowParser(row))
@@ -163,7 +163,7 @@ func extractImport(rows []string, idx int) ([][]*unit, int) {
 func extractComment(rows []string, idx int) (unit, int) {
 	row := strings.TrimSpace(rows[idx])
 	if len(row) <= 1 {
-		log.Fatal("extract comment error")
+		log.Fatalf("extract comment, err: %s", row)
 	}
 
 	comments := []string{}
@@ -171,7 +171,7 @@ func extractComment(rows []string, idx int) (unit, int) {
 	case "//":
 		for i := idx; i < len(rows); i++ {
 			row := strings.TrimSpace(rows[i])
-			if string(row[:2]) != "//" {
+			if len(row) <= 1 || string(row[:2]) != "//" {
 				break
 			}
 			comments = append(comments, row)
@@ -180,7 +180,7 @@ func extractComment(rows []string, idx int) (unit, int) {
 	case "/*":
 		for i := idx; i < len(rows); i++ {
 			row := strings.TrimSpace(rows[i])
-			if string(row[:2]) == "*/" {
+			if len(row) <= 1 || string(row[:2]) == "*/" {
 				break
 			}
 			comments = append(comments, row)
