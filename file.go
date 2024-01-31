@@ -2,7 +2,7 @@ package goast
 
 type File struct {
 	Path    string
-	Package string
-	Imports []string
+	Package []*unit
+	Imports [][]*unit
 	Nodes   []*Node
 }
