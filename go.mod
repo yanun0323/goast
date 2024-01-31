@@ -1,3 +1,3 @@
-module github.com/yanun0323/ast
+module github.com/yanun0323/goast
 
-go 1.21.6
+go 1.18
