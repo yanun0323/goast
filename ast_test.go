@@ -180,7 +180,7 @@ func Test_extractComment(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			got, got1 := extractComment(tt.args.rows, tt.args.idx)
-			assert(t, tt.want, got)
+			assert(t, tt.want, *got)
 			assert(t, tt.want1, got1)
 		})
 	}
