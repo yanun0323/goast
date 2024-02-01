@@ -56,7 +56,7 @@ func parsingType(span string, extraRule ...func(string) (Type, bool)) Type {
 	}
 
 	switch span {
-	case "type", "var", "const", "import", "package", "=":
+	case "type", "var", "const", "import", "package", "=", "{", "}", "(", ")":
 		return Keyword
 	case "struct":
 		return Structure

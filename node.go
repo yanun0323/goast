@@ -1,12 +1,12 @@
 package goast
 
 type Node struct {
-	Values          []*unit /* node values */
+	Values          []*unit /* node values/defines */
 	CollectionCount int     /* array size */
 	CollectionKey   Type    /* map key */
 	CollectionValue Type    /* map value, slice value, array value */
 
-	Parameters      []*Node /* struct/interface/function/method parameters */
+	Parameters      []*Node /* struct/interface/function/method/var/const parameters */
 	Returns         []*Node /* function/method returns */
 	UnsupportedData *unit   /* raw string data unsupported type */
 }
