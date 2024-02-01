@@ -29,7 +29,16 @@ func ParseFile(path string) (*File, error) {
 		Path: path,
 	}
 
-	// var commentCache *unit
+	var cacheComment *unit
+	tryCleanCacheComment := func() {
+		if cacheComment == nil {
+			return
+		}
+		file.Nodes = append(file.Nodes, &Node{
+			Values: []*unit{cacheComment},
+		})
+		cacheComment = nil
+	}
 
 	rows := strings.Split(string(buf), "\n")
 	for i := 0; i < len(rows); i++ {
@@ -41,14 +50,15 @@ func ParseFile(path string) (*File, error) {
 		}
 
 		if strings.HasPrefix(row, "import") {
-			imports, idx := extractImport(rows, i)
-			i = idx
-			file.Imports = imports
+			file.Imports, i = extractImport(rows, i)
 			continue
 		}
 
 		if strings.HasPrefix(row, "/") {
-			extractComment(rows, i)
+			tryCleanCacheComment()
+			cacheComment, i = extractComment(rows, i)
+			continue
+
 		}
 
 		if strings.HasPrefix(row, "const") {
@@ -160,7 +170,7 @@ func extractImport(rows []string, idx int) ([][]*unit, int) {
 	return result, idx
 }
 
-func extractComment(rows []string, idx int) (unit, int) {
+func extractComment(rows []string, idx int) (*unit, int) {
 	row := strings.TrimSpace(rows[idx])
 	if len(row) <= 1 {
 		log.Fatalf("extract comment, err: %s", row)
@@ -180,14 +190,17 @@ func extractComment(rows []string, idx int) (unit, int) {
 	case "/*":
 		for i := idx; i < len(rows); i++ {
 			row := strings.TrimSpace(rows[i])
-			if len(row) <= 1 || string(row[:2]) == "*/" {
+			if len(row) <= 1 {
 				break
 			}
 			comments = append(comments, row)
 			idx = i
+			if string(row[:2]) == "*/" {
+				break
+			}
 		}
 	}
-	return unit{
+	return &unit{
 		Index: 0,
 		Type:  Comment,
 		Value: strings.Join(comments, "\n"),

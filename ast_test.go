@@ -125,10 +125,56 @@ func Test_extractComment(t *testing.T) {
 		want1 int
 	}{
 		{
-			name: "simple happy case",
+			name: "one row comment with double slashes happy case",
 			args: args{
-				rows: []string{"temporary"},
+				rows: []string{"// one row comment with double slashes", ""},
+				idx:  0,
 			},
+			want: unit{
+				Index: 0,
+				Type:  Comment,
+				Value: "// one row comment with double slashes",
+			},
+			want1: 0,
+		},
+		{
+			name: "two rows comments with double slashes happy case",
+			args: args{
+				rows: []string{"// two rows comments", "// with double slashes", ""},
+				idx:  0,
+			},
+			want: unit{
+				Index: 0,
+				Type:  Comment,
+				Value: "// two rows comments\n// with double slashes",
+			},
+			want1: 1,
+		},
+		{
+			name: "one row comment with single slash happy case",
+			args: args{
+				rows: []string{"/* one row comment with single slash */", ""},
+				idx:  0,
+			},
+			want: unit{
+				Index: 0,
+				Type:  Comment,
+				Value: "/* one row comment with single slash */",
+			},
+			want1: 0,
+		},
+		{
+			name: "four rows comments with single slash happy case",
+			args: args{
+				rows: []string{"/* multiline comments", "with", "single slash", "*/", ""},
+				idx:  0,
+			},
+			want: unit{
+				Index: 0,
+				Type:  Comment,
+				Value: "/* multiline comments\nwith\nsingle slash\n*/",
+			},
+			want1: 3,
 		},
 	}
 	for _, tt := range tests {
