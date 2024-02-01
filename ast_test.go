@@ -112,3 +112,30 @@ func Test_extractImport(t *testing.T) {
 		})
 	}
 }
+
+func Test_extractComment(t *testing.T) {
+	type args struct {
+		rows []string
+		idx  int
+	}
+	tests := []struct {
+		name  string
+		args  args
+		want  unit
+		want1 int
+	}{
+		{
+			name: "simple happy case",
+			args: args{
+				rows: []string{"temporary"},
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, got1 := extractComment(tt.args.rows, tt.args.idx)
+			assert(t, tt.want, got)
+			assert(t, tt.want1, got1)
+		})
+	}
+}
