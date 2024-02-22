@@ -216,7 +216,9 @@ func Test_extractConst(t *testing.T) {
 					"one",
 					"two",
 					"three",
-					"\t`",
+					"",
+					"four",
+					"`",
 					")",
 				},
 				idx: 0,
@@ -227,7 +229,38 @@ func Test_extractConst(t *testing.T) {
 				},
 				Parameters: []*Node{
 					{
-						Values: []*unit{Unit(0, Keyword, "name"), Unit(1, Keyword, "="), Unit(2, Raw, "\"hello\"")},
+						Values:     []*unit{Unit(0, Keyword, "name"), Unit(1, Keyword, "=")},
+						Parameters: []*Node{{Values: []*unit{Unit(2, Raw, "\"hello\"")}}},
+					},
+					{
+						Values:     []*unit{Unit(0, Keyword, "_age"), Unit(1, Keyword, "=")},
+						Parameters: []*Node{{Values: []*unit{Unit(2, Raw, "5")}}},
+					},
+					{
+						Values: []*unit{Unit(0, Keyword, "_foo"), Unit(1, Keyword, "="), Unit(2, Raw, "map[int]int")},
+						Parameters: []*Node{{
+							Values:          []*unit{Unit(2, Keyword, "map")},
+							CollectionKey:   Int,
+							CollectionValue: Int,
+							Parameters: []*Node{
+								{Values: []*unit{Unit(0, Raw, "1 : 11")}},
+								{Values: []*unit{Unit(0, Raw, "2 : 22")}},
+								{Values: []*unit{Unit(0, Raw, "3 : 33")}},
+							},
+						}},
+					},
+					{
+						Values:        []*unit{Unit(0, Keyword, "_multiString"), Unit(1, Keyword, "=")},
+						CollectionKey: String, /* multiline-string */
+						Parameters: []*Node{
+							{Values: []*unit{Unit(0, Raw, "")}},
+							{Values: []*unit{Unit(0, Raw, "one")}},
+							{Values: []*unit{Unit(0, Raw, "two")}},
+							{Values: []*unit{Unit(0, Raw, "three")}},
+							{Values: []*unit{Unit(0, Raw, "")}},
+							{Values: []*unit{Unit(0, Raw, "four")}},
+							{Values: []*unit{Unit(0, Raw, "")}},
+						},
 					},
 				},
 			},

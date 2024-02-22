@@ -41,6 +41,8 @@ const (
 	/* function */
 	Function
 	Method
+	/* special */
+	Special
 )
 
 func parsingType(span string, extraRule ...func(string) (Type, bool)) Type {
@@ -106,7 +108,7 @@ func parsingType(span string, extraRule ...func(string) (Type, bool)) Type {
 		return Comment
 	}
 
-	if strings.HasPrefix(span, "map") {
+	if strings.HasPrefix(span, "map[") {
 		return Map
 	}
 

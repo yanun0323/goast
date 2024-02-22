@@ -106,6 +106,44 @@ func tryCombineComment(spans []string, idx int) (string, int) {
 	}
 }
 
+// tryParsingComplexComponent parses string to Node when type is map/array/slice/multiline-string/struct/interface
+func tryParsingComplexComponent(rows []string, idx int) (*Node, int) {
+	spans := strings.Split(strings.TrimSpace(rows[idx]), " ")
+	root := &Node{}
+	complexComponent := false
+	structIndex := -1
+	p := -1
+	openBucket := ""
+	for i, span := range spans {
+		span = strings.TrimSpace(span)
+		t := parsingType(span, func(s string) (Type, bool) {
+			if len(s) >= 1 && s[0] == '`' {
+				return Special, true /* Special for multiline string */
+			}
+			return Raw, false
+		})
+		root.Values = append(root.Values, Unit(i, t, span))
+		switch t {
+		case Map, Slice, Array, Special, Structure, Interface:
+			complexComponent = true
+			structIndex = i
+		case Keyword:
+			switch span {
+			case "(":
+			case ")":
+			case "{":
+			case "}":
+			}
+		}
+	}
+
+	if !complexComponent {
+		return root, idx
+	}
+	// start parsing complex component
+
+}
+
 func extractPackage(row string) []*unit {
 	result := []*unit{}
 	spans := strings.Split(row, " ")

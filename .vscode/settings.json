@@ -1,3 +1,4 @@
 {
-    "twinny.disableServerChecks": true
+    "twinny.disableServerChecks": true,
+    "workbench.colorTheme": "Default Dark Modern"
 }
