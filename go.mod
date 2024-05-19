@@ -1,3 +1,3 @@
 module github.com/yanun0323/goast
 
-go 1.18
+go 1.22.1
