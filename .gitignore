@@ -1,0 +1,10 @@
+# Mac system files
+*.DS_Store
+*.DS_STORE
+
+# VSCode settings
+*.vscode
+
+# Others
+*.yaml
+go.work
