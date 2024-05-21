@@ -5,13 +5,12 @@ import (
 	"io"
 	"os"
 	"path/filepath"
-	"strings"
 )
 
 type rawFile struct {
-	dir   string
-	name  string
-	lines []string
+	dir  string
+	name string
+	raw  []byte
 }
 
 func newRawFile(filePath string) (*rawFile, error) {
@@ -32,8 +31,13 @@ func newRawFile(filePath string) (*rawFile, error) {
 	}
 
 	return &rawFile{
-		dir:   filepath.Dir(filePath),
-		name:  filepath.Base(filePath),
-		lines: strings.Split(string(formatted), "\n"),
+		dir:  filepath.Dir(filePath),
+		name: filepath.Base(filePath),
+		raw:  formatted,
 	}, nil
+}
+
+type rawLine struct {
+	line int
+	text string
 }

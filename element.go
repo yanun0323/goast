@@ -1,7 +1,5 @@
 package goast
 
-import "strings"
-
 /*
 Element stands for any element in go language.
 */
@@ -14,23 +12,35 @@ type Element interface {
 }
 
 func NewElement(line int, value string, kind ...ElementKind) Element {
-	v := strings.TrimSpace(value)
-	if len(v) == 0 {
-		return nil
-	}
+	elem := &element{line: line, value: value}
 
-	k := ElemUnknown
 	if len(kind) != 0 {
-		k = kind[0]
-	} else {
-		k = newElementKind(v)
+		elem.kind = kind[0]
+		return elem
 	}
 
-	return &element{
-		line:  line,
-		kind:  k,
-		value: v,
+	if len(value) == 1 && _separatorCharset.Contain(value[0]) {
+		elem.kind = ElemSeparator
+		return elem
 	}
+
+	if _golangKeywords.Contain(value) {
+		elem.kind = ElemKeyword
+		return elem
+	}
+
+	if _golangBasicType.Contain(value) {
+		elem.kind = ElemBasicType
+		return elem
+	}
+
+	if _golangSymbol.Contain(value) {
+		elem.kind = ElemSymbol
+		return elem
+	}
+
+	elem.kind = ElemUnknown
+	return elem
 }
 
 type element struct {
@@ -76,7 +86,7 @@ func (e *element) Print() {
 		return
 	}
 
-	println("\t", e.Line(), " ....", "Element."+e.kind.String())
+	println("\t", e.Line(), " ....", "Element."+e.kind.String(), "....", e.value)
 }
 
 type ElementKind uint8
@@ -86,12 +96,16 @@ const (
 	ElemComment
 	ElemKeyword
 	ElemSymbol
-	ElemBasic
+	ElemBasicType
+	ElemSeparator
 	ElemName /* manual define */
 )
 
-func (k ElementKind) String() string {
-	switch k {
+func (k *ElementKind) String() string {
+	if k == nil {
+		return ""
+	}
+	switch *k {
 	case ElemUnknown:
 		return "Unknown"
 	case ElemComment:
@@ -100,154 +114,13 @@ func (k ElementKind) String() string {
 		return "Keyword"
 	case ElemSymbol:
 		return "Symbol"
-	case ElemBasic:
-		return "Basic"
+	case ElemBasicType:
+		return "BasicType"
+	case ElemSeparator:
+		return "Separator"
 	case ElemName:
 		return "Name"
 	}
 
 	return ""
-}
-
-var _keywordTable = map[string]struct{}{
-	"break":       {},
-	"default":     {},
-	"func":        {},
-	"interface":   {},
-	"interface{}": {},
-	"select":      {},
-	"case":        {},
-	"defer":       {},
-	"go":          {},
-	"map":         {},
-	"struct":      {},
-	"struct{}":    {},
-	"chan":        {},
-	"else":        {},
-	"goto":        {},
-	"package":     {},
-	"switch":      {},
-	"const":       {},
-	"fallthrough": {},
-	"if":          {},
-	"range":       {},
-	"type":        {},
-	"continue":    {},
-	"for":         {},
-	"import":      {},
-	"return":      {},
-	"var":         {},
-}
-
-var _symbolTable = map[string]struct{}{
-	"+":   {},
-	"&":   {},
-	"+=":  {},
-	"&=":  {},
-	"&&":  {},
-	"==":  {},
-	"!=":  {},
-	"(":   {},
-	")":   {},
-	"-":   {},
-	"|":   {},
-	"-=":  {},
-	"|=":  {},
-	"||":  {},
-	"<":   {},
-	"<=":  {},
-	"[":   {},
-	"]":   {},
-	"*":   {},
-	"^":   {},
-	"*=":  {},
-	"^=":  {},
-	"<-":  {},
-	">":   {},
-	">=":  {},
-	"{":   {},
-	"}":   {},
-	"/":   {},
-	"<<":  {},
-	"/=":  {},
-	"<<=": {},
-	"++":  {},
-	"=":   {},
-	":=":  {},
-	",":   {},
-	";":   {},
-	"%":   {},
-	">>":  {},
-	"%=":  {},
-	">>=": {},
-	"--":  {},
-	"!":   {},
-	"...": {},
-	".":   {},
-	":":   {},
-	"&^":  {},
-	"&^=": {},
-	"~":   {},
-}
-
-var _basicTable = map[string]struct{}{
-	"bool":       {},
-	"string":     {},
-	"byte":       {},
-	"rune":       {},
-	"int":        {},
-	"uint":       {},
-	"int8":       {},
-	"uint8":      {},
-	"int16":      {},
-	"uint16":     {},
-	"int32":      {},
-	"uint32":     {},
-	"int64":      {},
-	"uint64":     {},
-	"uintptr":    {},
-	"float32":    {},
-	"float64":    {},
-	"complex64":  {},
-	"complex128": {},
-}
-
-func newElementKind(v string) ElementKind {
-	if _, isBasic := _basicTable[v]; isBasic {
-		return ElemBasic
-	}
-
-	if _, isKeyword := _keywordTable[v]; isKeyword {
-		return ElemKeyword
-	}
-
-	if _, isSymbol := _symbolTable[v]; isSymbol {
-		return ElemSymbol
-	}
-
-	if len(v) >= 2 && (v[:2] == "//" || v[:2] == "/*") {
-		return ElemComment
-	}
-
-	if len(v) >= 4 && v[:4] == "map[" {
-		return ElemKeyword
-	}
-
-	if len(v) >= 2 && v[:2] == "[]" {
-		return ElemKeyword
-	}
-
-	if v[0] == '[' {
-		return ElemKeyword
-	}
-
-	if len(v) >= 6 && v[:6] == "func (" {
-		return ElemKeyword
-	}
-
-	if len(v) >= 4 && v[:4] == "func" {
-		return ElemKeyword
-	}
-
-	return ElemUnknown
 }

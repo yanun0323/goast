@@ -1,6 +1,9 @@
 package goast
 
-import "testing"
+import (
+	"strings"
+	"testing"
+)
 
 type Assert struct {
 	t *testing.T
@@ -16,7 +19,7 @@ func (a Assert) NoError(err error, msg ...string) {
 	}
 
 	if len(msg) != 0 {
-		a.t.Fatalf("%s, err: %+v", msg[0], err)
+		a.t.Fatalf("%s, err: %+v", strings.Join(msg, " "), err)
 	}
 
 	a.t.Fatalf("%+v", err)
@@ -28,8 +31,8 @@ func (a Assert) Require(ok bool, msg ...string) {
 	}
 
 	if len(msg) != 0 {
-		a.t.Fatal("require")
+		a.t.Fatalf("%s, err: expected true bug get false", strings.Join(msg, " "))
 	}
 
-	a.t.Fatalf("require, %s", msg[0])
+	a.t.Fatal("err: expected true bug get false")
 }

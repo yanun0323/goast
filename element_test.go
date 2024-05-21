@@ -1,6 +1,8 @@
 package goast
 
-import "testing"
+import (
+	"testing"
+)
 
 func TestElement(t *testing.T) {
 	s := "123456"
