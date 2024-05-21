@@ -18,6 +18,8 @@ func (a Assert) NoError(err error, msg ...string) {
 		return
 	}
 
+	a.t.Helper()
+
 	if len(msg) != 0 {
 		a.t.Fatalf("%s, err: %+v", strings.Join(msg, " "), err)
 	}
@@ -30,9 +32,11 @@ func (a Assert) Require(ok bool, msg ...string) {
 		return
 	}
 
+	a.t.Helper()
+
 	if len(msg) != 0 {
-		a.t.Fatalf("%s, err: expected true bug get false", strings.Join(msg, " "))
+		a.t.Fatalf("%s, err: require", strings.Join(msg, " "))
 	}
 
-	a.t.Fatal("err: expected true bug get false")
+	a.t.Fatalf("err: require")
 }

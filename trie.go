@@ -1,20 +1,26 @@
 package goast
 
-type trie[T any] interface {
+type trie[T comparable] interface {
 	AddText(s string, value T) *trie_[T]
-	FindByte(b []byte) (T, bool)
 	FindText(s string) (T, bool)
+	FindTextReversely(s string) (T, bool)
+	FindByte(b []byte) (T, bool)
+	FindByteReversely(b []byte) (T, bool)
 	Insert(key byte, value T) *trie_[T]
 	Next(key byte) (*trie_[T], bool)
 	Value() T
 }
 
-type trie_[T any] struct {
+type trie_[T comparable] struct {
 	value T
 	next  map[byte]*trie_[T]
 }
 
 func (t *trie_[T]) AddText(s string, value T) *trie_[T] {
+	if t == nil {
+		return nil
+	}
+
 	var zero T
 	n := t
 	for i := range s {
@@ -25,6 +31,10 @@ func (t *trie_[T]) AddText(s string, value T) *trie_[T] {
 }
 
 func (t *trie_[T]) Insert(key byte, value T) *trie_[T] {
+	if t == nil {
+		return nil
+	}
+
 	if t.next == nil {
 		t.next = map[byte]*trie_[T]{}
 	}
@@ -39,38 +49,81 @@ func (t *trie_[T]) Insert(key byte, value T) *trie_[T] {
 }
 
 func (t *trie_[T]) FindText(s string) (T, bool) {
+	if t == nil {
+		return t.Value(), false
+	}
+
 	n := t
 	ok := false
 	for i := range s {
 		n, ok = n.Next(s[i])
 		if !ok {
-			var zero T
-			return zero, false
+			return n.Value(), false
+		}
+	}
+	return n.Value(), true
+}
+
+func (t *trie_[T]) FindTextReversely(s string) (T, bool) {
+	if t == nil {
+		return t.Value(), false
+	}
+
+	n := t
+	ok := false
+	for i := len(s) - 1; i >= 0; i-- {
+		n, ok = n.Next(s[i])
+		if !ok {
+			return n.Value(), false
 		}
 	}
 	return n.Value(), true
 }
 
 func (t *trie_[T]) FindByte(b []byte) (T, bool) {
+	if t == nil {
+		return t.Value(), false
+	}
+
 	n := t
 	ok := false
 	for i := range b {
 		n, ok = n.Next(b[i])
 		if !ok {
-			var zero T
-			return zero, false
+			return n.Value(), false
 		}
 	}
 
 	return n.Value(), true
 }
 
-func (t trie_[T]) Value() T {
+func (t *trie_[T]) FindByteReversely(b []byte) (T, bool) {
+	if t == nil {
+		return t.Value(), false
+	}
+
+	n := t
+	ok := false
+	for i := len(b) - 1; i >= 0; i-- {
+		n, ok = n.Next(b[i])
+		if !ok {
+			return n.Value(), false
+		}
+	}
+
+	return n.Value(), true
+}
+
+func (t *trie_[T]) Value() T {
+	if t == nil {
+		var zero T
+		return zero
+	}
 	return t.value
 }
 
-func (t trie_[T]) Next(key byte) (*trie_[T], bool) {
-	if t.next == nil {
+func (t *trie_[T]) Next(key byte) (*trie_[T], bool) {
+	if t == nil || t.next == nil {
 		return nil, false
 	}
 
@@ -78,7 +131,7 @@ func (t trie_[T]) Next(key byte) (*trie_[T], bool) {
 	return n, ok
 }
 
-func newTrie[T any](set map[string]T) trie[T] {
+func newTrie[T comparable](set map[string]T) trie[T] {
 	root := &trie_[T]{}
 	for k, v := range set {
 		_ = root.AddText(k, v)

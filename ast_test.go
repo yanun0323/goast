@@ -9,7 +9,10 @@ func TestParse(t *testing.T) {
 
 	ff, err := ParseAst("sample_test.go")
 	a.NoError(err)
-	for _, scope := range ff.Defines() {
-		scope.Print()
+	for _, sc := range ff.Scope() {
+		sc.Print()
+		for _, n := range sc.Node() {
+			n.Print()
+		}
 	}
 }

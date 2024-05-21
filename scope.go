@@ -1,7 +1,5 @@
 package goast
 
-import "strings"
-
 /*
 Scope means the first level declaration of a go file.
 
@@ -11,22 +9,21 @@ type Scope interface {
 	Kind() ScopeKind
 	Line() int
 	Print()
-	Text() string
-	Valuable() bool
+	Node() []Node
 }
 
-func NewScope(line int, kind ScopeKind, values []rawLine) Scope {
+func NewScope(line int, kind ScopeKind, node []Node) Scope {
 	return &scope{
-		line:   line,
-		kind:   kind,
-		values: values,
+		line: line,
+		kind: kind,
+		node: node,
 	}
 }
 
 type scope struct {
-	line   int
-	kind   ScopeKind
-	values []rawLine
+	line int
+	kind ScopeKind
+	node []Node
 }
 
 func (d *scope) Line() int {
@@ -45,25 +42,8 @@ func (d *scope) Kind() ScopeKind {
 	return d.kind
 }
 
-func (d *scope) Valuable() bool {
-	if d == nil {
-		return false
-	}
-
-	return len(d.values) != 0
-}
-
-func (d *scope) Text() string {
-	if d == nil {
-		return ""
-	}
-
-	text := make([]string, 0, len(d.values))
-	for _, l := range d.values {
-		text = append(text, l.text)
-	}
-
-	return strings.Join(text, "\n")
+func (d *scope) Node() []Node {
+	return d.node
 }
 
 func (d *scope) Print() {
@@ -71,7 +51,7 @@ func (d *scope) Print() {
 		return
 	}
 
-	println(d.Line(), " ....", "Scope."+d.kind.String())
+	println(d.Line()+1, " ....", "Scope."+d.kind.String())
 }
 
 // ScopeKind
