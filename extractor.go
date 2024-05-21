@@ -52,7 +52,8 @@ type extractor struct {
 }
 
 func (e extractor) Run(text []byte, i *int, line *int) ([]Node, error) {
-	var (
+	// TODO: Extract String with ' " ` and ignore \' \" \`
+ 	var (
 		char         byte
 		result       []Node
 		buf          strings.Builder

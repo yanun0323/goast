@@ -21,5 +21,5 @@ func Print(msg string, d decimal.Decimal) {
 	for i := range n {
 		n[i].Print()
 	}
-	a.Require(len(n) == 19, "nodes length", fmt.Sprintf("%d", len(n)))
+	a.Require(len(n) == 32, "nodes length", fmt.Sprintf("%d", len(n)))
 }
