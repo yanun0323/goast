@@ -1,5 +1,10 @@
 package goast
 
+import (
+	"sort"
+	"strings"
+)
+
 /*
 Scope means the first level declaration of a go file.
 
@@ -51,7 +56,24 @@ func (d *scope) Print() {
 		return
 	}
 
-	println(d.Line()+1, " ....", "Scope."+d.kind.String())
+	println(d.Line()+1, "....", "Scope."+d.kind.String())
+
+	buf := map[int][]string{}
+	lines := []int{}
+	for _, n := range d.Node() {
+		if _, ok := buf[n.Line()]; !ok {
+			lines = append(lines, n.Line())
+		}
+		buf[n.Line()] = append(buf[n.Line()], n.Text())
+	}
+
+	sort.Slice(lines, func(i, j int) bool {
+		return lines[i] < lines[j]
+	})
+
+	for _, l := range lines {
+		println("\t", l+1, "....", strings.Join(buf[l], ""))
+	}
 }
 
 // ScopeKind

@@ -6,13 +6,15 @@ import (
 
 func TestParse(t *testing.T) {
 	a := NewAssert(t)
-
+	_ = a
+	// return
 	ff, err := ParseAst("sample_test.go")
-	a.NoError(err)
+	a.NoError(err, "parse ast error")
+	a.Require(ff != nil, "nil ast check")
 	for _, sc := range ff.Scope() {
 		sc.Print()
-		for _, n := range sc.Node() {
-			n.Print()
-		}
+		// for _, n := range sc.Node() {
+		// 	n.Print()
+		// }
 	}
 }

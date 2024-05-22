@@ -4,6 +4,7 @@ import (
 	"go/format"
 	"io"
 	"os"
+	"strings"
 )
 
 func readFile(file string) ([]byte, error) {
@@ -24,4 +25,42 @@ func readFile(file string) ([]byte, error) {
 	}
 
 	return formatted, nil
+}
+
+func hasPrefix(s []byte, prefix string) bool {
+	if len(prefix) > len(s) {
+		return false
+	}
+
+	for i := range prefix {
+		if s[i] != prefix[i] {
+			return false
+		}
+	}
+
+	return true
+}
+
+func hasSuffix(s []byte, suffix string) bool {
+	if len(suffix) > len(s) {
+		return false
+	}
+	ss := s[len(s)-len(suffix):]
+	for i := range ss {
+		if ss[i] != suffix[i] {
+			return false
+		}
+	}
+
+	return true
+}
+
+func printTidy(s string, space ...bool) string {
+	s = strings.ReplaceAll(s, "\n", "\\n")
+	s = strings.ReplaceAll(s, "\t", "\\t")
+	s = strings.ReplaceAll(s, "\r", "\\r")
+	if len(space) != 0 && space[0] {
+		s = strings.ReplaceAll(s, " ", "\\s")
+	}
+	return s
 }

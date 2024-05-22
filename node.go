@@ -24,6 +24,11 @@ func NewNode(line int, text string, kind ...Kind) Node {
 		return elem
 	}
 
+	if buf := []byte(text); hasPrefix(buf, "\"") || hasPrefix(buf, "`") {
+		elem.kind = KindString
+		return elem
+	}
+
 	if _golangKeywords.Contain(text) {
 		elem.kind = KindKeyword
 		return elem
@@ -86,5 +91,5 @@ func (n *node) Print() {
 		return
 	}
 
-	println("\t", n.Line()+1, " ....", "Node."+n.kind.String(), "....", n.text)
+	println("\t", n.Line()+1, " ....", "Node."+n.kind.String(), "....", printTidy(n.text))
 }

@@ -8,119 +8,152 @@ import (
 var ErrOutOfRange = errors.New("out of range")
 
 func extract(text []byte) ([]Node, error) {
-	var i, line int
-	return _commonExtractor.Run(text, &i, &line)
+	var (
+		i, line int
+		buf     strings.Builder
+	)
+	return _commonExtractor.Run(text, &buf, &i, &line)
 }
 
 var (
-	_commonExtractor = extractor{
-		ReturnCharset:       nil,
-		SeparatorCharset:    _separatorCharset,
-		CommentKeyword:      _commentKeywordTrie,
-		InnerCommentKeyword: _innerCommentKeywordTrie,
-	}
-	_parenthesisExtractor = extractor{
-		ReturnCharset:       newCharset[byte](')'),
-		SeparatorCharset:    _separatorCharset,
-		CommentKeyword:      _commentKeywordTrie,
-		InnerCommentKeyword: _innerCommentKeywordTrie,
+	_commonExtractor = &extractor{
+		SeparatorCharset:  _separatorCharset,
+		ReturnKeyword:     "",
+		SkipReturnKeyword: "",
 	}
 
-	_curlyBracketExtractor = extractor{
-		ReturnCharset:       newCharset[byte]('}'),
-		SeparatorCharset:    _separatorCharset,
-		CommentKeyword:      _commentKeywordTrie,
-		InnerCommentKeyword: _innerCommentKeywordTrie,
+	_parenthesisExtractor = &extractor{
+		kind:              KindKeyword,
+		SeparatorCharset:  _separatorCharset,
+		ReturnKeyword:     ")",
+		SkipReturnKeyword: "",
 	}
 
-	_commentKeywordTrie = newTrie(map[string]bool{"//": true})
+	_curlyBracketExtractor = &extractor{
+		kind:              KindKeyword,
+		SeparatorCharset:  _separatorCharset,
+		ReturnKeyword:     "}",
+		SkipReturnKeyword: "",
+	}
 
-	_innerCommentKeywordTrie = newTrie(map[string]trie[bool]{
-		"/*": newTrie(map[string]bool{"*/": true}),
-	})
-	_deeperExtract = map[byte]extractor{
-		'(': _parenthesisExtractor,
-		'{': _curlyBracketExtractor,
+	_commentExtractor = &extractor{
+		kind:              KindComment,
+		IncludeOpen:       true,
+		SeparatorCharset:  nil,
+		ReturnKeyword:     "\n",
+		SkipReturnKeyword: "",
+	}
+
+	_innerCommentExtractor = &extractor{
+		kind:              KindComment,
+		IncludeOpen:       true,
+		IncludeClose:      true,
+		SeparatorCharset:  nil,
+		ReturnKeyword:     "*/",
+		SkipReturnKeyword: "",
+	}
+
+	_stringExtractor = &extractor{
+		kind:              KindString,
+		IncludeOpen:       true,
+		IncludeClose:      true,
+		SeparatorCharset:  nil,
+		ReturnKeyword:     "\"",
+		SkipReturnKeyword: "\\\"",
+	}
+
+	_multilineStringExtractor = &extractor{
+		kind:              KindString,
+		IncludeOpen:       true,
+		IncludeClose:      true,
+		SeparatorCharset:  nil,
+		ReturnKeyword:     "`",
+		SkipReturnKeyword: "",
+	}
+
+	_deeperExtractTable = map[*extractor]deeperExtract{
+		_commonExtractor:       _commonDeeperExtract,
+		_parenthesisExtractor:  _commonDeeperExtract,
+		_curlyBracketExtractor: _commonDeeperExtract,
+	}
+	_commonDeeperExtract = deeperExtract{
+		"(":  _parenthesisExtractor,
+		"{":  _curlyBracketExtractor,
+		"//": _commentExtractor,
+		"/*": _innerCommentExtractor,
+		"\"": _stringExtractor,
+		"`":  _multilineStringExtractor,
 	}
 )
 
-type extractor struct {
-	ReturnCharset       charset[byte]
-	SeparatorCharset    charset[byte]
-	CommentKeyword      trie[bool]
-	InnerCommentKeyword trie[trie[bool]]
+type deeperExtract map[string]*extractor
+
+func (de deeperExtract) PrefixFit(s []byte) (*extractor, bool) {
+	if de == nil {
+		return nil, false
+	}
+
+	for k, v := range de {
+		if hasPrefix(s, k) {
+			return v, true
+		}
+	}
+	return nil, false
 }
 
-func (e extractor) Run(text []byte, i *int, line *int) ([]Node, error) {
-	// TODO: Extract String with ' " ` and ignore \' \" \`
- 	var (
-		char         byte
-		result       []Node
-		buf          strings.Builder
-		comment      bool
-		innerComment trie[bool]
+type extractor struct {
+	kind              Kind
+	IncludeOpen       bool
+	IncludeClose      bool
+	SeparatorCharset  charset[byte]
+	ReturnKeyword     string
+	SkipReturnKeyword string
+}
+
+func (e *extractor) Run(text []byte, buf *strings.Builder, i *int, line *int) ([]Node, error) {
+	if e == nil {
+		return nil, nil
+	}
+
+	var (
+		char   byte
+		result []Node
 	)
 
-	tryBuf2Node := func(kind ...Kind) {
+	bufLine := *line
+
+	pushNode := func(useLine bool, kind ...Kind) {
 		if buf.Len() == 0 {
 			return
 		}
-		result = append(result, NewNode(*line, buf.String(), kind...))
+		if useLine {
+			result = append(result, NewNode(*line, buf.String(), kind...))
+		} else {
+			result = append(result, NewNode(bufLine, buf.String(), kind...))
+		}
 		buf.Reset()
+		bufLine = *line
+	}
+
+	lineStep := func() {
+		if text[*i] == '\n' {
+			*line++
+		}
 	}
 
 	for ; *i < len(text); *i++ {
 		char = text[*i]
 
-		if comment {
-			// comment text
-			if char == '\n' {
-				// comment end
-				tryBuf2Node(KindComment)
-				result = append(result, NewNode(*line, string(char)))
-				*line++
-				comment = false
-			} else {
+		if ee, ok := e.DeeperExtract().PrefixFit(text[*i:]); ok {
+			// () {} /**/ "" `` //\n
+			pushNode(true)
+			if ee != nil && ee.IncludeOpen { // /* // " `
 				buf.WriteByte(char)
+			} else { // ( {
+				result = append(result, NewNode(bufLine, string(char)))
 			}
-			continue
-		}
-
-		if innerComment != nil {
-			// inner comment text
-			buf.WriteByte(char)
-			if fit, ok := innerComment.FindByte(text[*i-1 : *i+1]); ok && fit {
-				// inner comment end
-				tryBuf2Node(KindComment)
-				innerComment = nil
-			}
-			continue
-		}
-
-		if *i+2 <= len(text) {
-			if fit, ok := e.CommentKeyword.FindByte(text[*i : *i+2]); ok && fit {
-				// comment start
-				tryBuf2Node()
-				comment = true
-				buf.WriteByte(char)
-				continue
-			}
-
-			if set, ok := e.InnerCommentKeyword.FindByte(text[*i : *i+2]); ok && set != nil {
-				// inner comment start
-				tryBuf2Node()
-				innerComment = set
-				buf.WriteByte(char)
-				continue
-			}
-		}
-
-		if e, ok := _deeperExtract[char]; ok {
-			// () or {}
-			tryBuf2Node()
-			result = append(result, NewNode(*line, string(char)))
 			*i++
-			ns, err := e.Run(text, i, line)
+			ns, err := ee.Run(text, buf, i, line)
 			if err != nil {
 				return nil, err
 			}
@@ -128,24 +161,49 @@ func (e extractor) Run(text []byte, i *int, line *int) ([]Node, error) {
 			continue
 		}
 
+		trailing := text[:*i+1]
+		if len(e.SkipReturnKeyword) != 0 && hasSuffix(trailing, e.SkipReturnKeyword) {
+			// skip return
+			buf.WriteByte(char)
+			lineStep()
+			continue
+		}
+
+		if len(e.ReturnKeyword) != 0 && hasSuffix(trailing, e.ReturnKeyword) {
+			// inside ) } */ " ` \n
+			if e.IncludeClose { // */ " `
+				buf.WriteByte(char)
+				pushNode(false, e.Kind()...)
+			} else {
+				pushNode(true, e.Kind()...)
+				result = append(result, NewNode(*line, string(char)))
+			}
+			lineStep()
+			return result, nil
+		}
+
 		if e.SeparatorCharset.Contain(char) {
 			// ' '
-			tryBuf2Node()
+			pushNode(true)
 			result = append(result, NewNode(*line, string(char)))
 		} else {
 			buf.WriteByte(char)
 		}
 
-		if e.ReturnCharset.Contain(char) {
-			// inside ) or }
-			tryBuf2Node()
-			return result, nil
-		}
-
-		if char == '\n' {
-			*line++
-		}
+		lineStep()
 	}
-	tryBuf2Node()
+	pushNode(true)
 	return result, nil
+}
+
+func (e *extractor) Kind() []Kind {
+	if e == nil || e.kind == KindUnknown {
+		return nil
+	}
+
+	return []Kind{e.kind}
+}
+
+func (e *extractor) DeeperExtract() deeperExtract {
+	return _deeperExtractTable[e]
 }

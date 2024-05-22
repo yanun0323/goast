@@ -21,10 +21,10 @@ func (a Assert) NoError(err error, msg ...string) {
 	a.t.Helper()
 
 	if len(msg) != 0 {
-		a.t.Fatalf("%s, err: %+v", strings.Join(msg, " "), err)
+		a.t.Fatalf("[%s] %s, err: %+v", a.t.Name(), strings.Join(msg, " "), err)
 	}
 
-	a.t.Fatalf("%+v", err)
+	a.t.Fatalf("[%s] %+v", err, a.t.Name())
 }
 
 func (a Assert) Require(ok bool, msg ...string) {
@@ -35,8 +35,8 @@ func (a Assert) Require(ok bool, msg ...string) {
 	a.t.Helper()
 
 	if len(msg) != 0 {
-		a.t.Fatalf("%s, err: require", strings.Join(msg, " "))
+		a.t.Fatalf("[%s] %s, err: require", a.t.Name(), strings.Join(msg, " "))
 	}
 
-	a.t.Fatalf("err: require")
+	a.t.Fatalf("[%s] err: require", a.t.Name())
 }

@@ -9,7 +9,8 @@ const (
 	KindSymbol
 	KindBasicType
 	KindSeparator
-	KindName /* manual define */
+	KindName   /* manual define */
+	KindString /* manual define */
 )
 
 func (k *Kind) String() string {
@@ -31,6 +32,8 @@ func (k *Kind) String() string {
 		return "Separator"
 	case KindName:
 		return "Name"
+	case KindString:
+		return "String"
 	}
 
 	return ""
