@@ -19,8 +19,12 @@ func Print(msg string, d decimal.Decimal) {
 `
 	n, err := extract([]byte(s))
 	a.Require(err == nil, "extract no error", fmt.Sprintf("%+v", err))
-	for i := range n {
-		n[i].Print()
-	}
-	a.Require(len(n) == 40, "nodes length", fmt.Sprintf("%d", len(n)))
+
+	count := 0
+	_ = n.IterNext(func(n Node) bool {
+		// n.Print()
+		count++
+		return true
+	})
+	a.Require(count == 40, "nodes length", fmt.Sprintf("%d", count))
 }

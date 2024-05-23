@@ -1,6 +1,7 @@
 package goast
 
 var (
+	_commonResetter = &kindResetter{}
 	_importResetter = &kindResetter{}
 	_defineResetter = &kindResetter{}
 	_typeResetter   = &kindResetter{}
@@ -19,13 +20,12 @@ type deeperResetter map[Kind]*kindResetter
 
 // kindResetter re-set the node kind with node's position of scope
 type kindResetter struct {
-	TriggerKind      map[Kind]bool
 	KindChangeTable  map[int]Kind
-	ChangeableKind   map[Kind]bool
-	UnchangeableKind map[Kind]bool
+	ChangeableKind   set[Kind]
+	UnchangeableKind set[Kind]
 }
 
-func Run(ns []Node) {
+func Run(ns []Node, i *int) {
 	for _, n := range ns {
 		_ = n
 	}

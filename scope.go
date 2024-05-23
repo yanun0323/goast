@@ -14,10 +14,10 @@ type Scope interface {
 	Kind() ScopeKind
 	Line() int
 	Print()
-	Node() []Node
+	Node() Node
 }
 
-func NewScope(line int, kind ScopeKind, node []Node) Scope {
+func NewScope(line int, kind ScopeKind, node Node) Scope {
 	return &scope{
 		line: line,
 		kind: kind,
@@ -28,7 +28,7 @@ func NewScope(line int, kind ScopeKind, node []Node) Scope {
 type scope struct {
 	line int
 	kind ScopeKind
-	node []Node
+	node Node
 }
 
 func (d *scope) Line() int {
@@ -47,7 +47,7 @@ func (d *scope) Kind() ScopeKind {
 	return d.kind
 }
 
-func (d *scope) Node() []Node {
+func (d *scope) Node() Node {
 	return d.node
 }
 
@@ -60,12 +60,14 @@ func (d *scope) Print() {
 
 	buf := map[int][]string{}
 	lines := []int{}
-	for _, n := range d.Node() {
+	_ = d.Node().IterNext(func(n Node) bool {
 		if _, ok := buf[n.Line()]; !ok {
 			lines = append(lines, n.Line())
 		}
 		buf[n.Line()] = append(buf[n.Line()], n.Text())
-	}
+
+		return true
+	})
 
 	sort.Slice(lines, func(i, j int) bool {
 		return lines[i] < lines[j]
@@ -119,13 +121,13 @@ func (k ScopeKind) String() string {
 func (k ScopeKind) ToKind() Kind {
 	switch k {
 	case ScopeUnknown:
-		return KindRaw
+		return KindRaws
 	case ScopePackage:
 		return KindPackage
 	case ScopeComment:
-		return KindComment
+		return KindComments
 	case ScopeInnerComment:
-		return KindComment
+		return KindComments
 	case ScopeImport:
 		return KindImport
 	case ScopeVariable:

@@ -6,11 +6,11 @@ func TestTrie(t *testing.T) {
 	a := NewAssert(t)
 
 	root := newTrie(map[string]*Kind{})
-	basic := KindBasicType
+	basic := KindBasics
 	_ = root.AddText("any", &basic)
 	kind, ok := root.FindText("any")
 	a.Require(ok, "find 'any'")
-	a.Require(kind != nil && *kind == KindBasicType, "kind 'any'", kind.String())
+	a.Require(kind != nil && *kind == KindBasics, "kind 'any'", kind.String())
 
 	kind, ok = root.FindText("an")
 	a.Require(ok, "find 'an'")
@@ -20,20 +20,20 @@ func TestTrie(t *testing.T) {
 	a.Require(!ok, "find 'ann'")
 	a.Require(kind == nil, "kind 'ann'", kind.String())
 
-	comment := KindComment
+	comment := KindComments
 	_ = root.AddText("ayy", &comment)
 
 	kind, ok = root.FindText("any")
 	a.Require(ok, "find 'any' 2")
-	a.Require(kind != nil && *kind == KindBasicType, "kind 'any' 2", kind.String())
+	a.Require(kind != nil && *kind == KindBasics, "kind 'any' 2", kind.String())
 
 	kind, ok = root.FindText("ayy")
 	a.Require(ok, "find 'ayy'")
-	a.Require(kind != nil && *kind == KindComment, "kind 'ayy'", kind.String())
+	a.Require(kind != nil && *kind == KindComments, "kind 'ayy'", kind.String())
 
 	kind, ok = root.FindByte([]byte("ayy"))
 	a.Require(ok, "find 'ayy' 2")
-	a.Require(kind != nil && *kind == KindComment, "kind 'ayy' 2", kind.String())
+	a.Require(kind != nil && *kind == KindComments, "kind 'ayy' 2", kind.String())
 }
 
 func TestTrieComment(t *testing.T) {

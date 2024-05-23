@@ -8,12 +8,17 @@ import (
 var ErrOutOfRange = errors.New("out of range")
 
 // extract parses file text content into nodes.
-func extract(text []byte) ([]Node, error) {
+func extract(text []byte) (Node, error) {
 	var (
 		i, line int
 		buf     strings.Builder
 	)
-	return _commonExtractor.Run(text, &buf, &i, &line)
+	node, err := _commonExtractor.Run(text, &buf, &i, &line)
+	if err != nil {
+		return nil, err
+	}
+
+	return node, nil
 }
 
 var (
@@ -24,21 +29,21 @@ var (
 	}
 
 	_parenthesisExtractor = &extractor{
-		kind:              KindKeyword,
+		kind:              KindKeywords,
 		SeparatorCharset:  _separatorCharset,
 		ReturnKeyword:     ")",
 		SkipReturnKeyword: "",
 	}
 
 	_curlyBracketExtractor = &extractor{
-		kind:              KindKeyword,
+		kind:              KindKeywords,
 		SeparatorCharset:  _separatorCharset,
 		ReturnKeyword:     "}",
 		SkipReturnKeyword: "",
 	}
 
 	_commentExtractor = &extractor{
-		kind:              KindComment,
+		kind:              KindComments,
 		IncludeOpen:       true,
 		SeparatorCharset:  nil,
 		ReturnKeyword:     "\n",
@@ -46,7 +51,7 @@ var (
 	}
 
 	_innerCommentExtractor = &extractor{
-		kind:              KindComment,
+		kind:              KindComments,
 		IncludeOpen:       true,
 		IncludeClose:      true,
 		SeparatorCharset:  nil,
@@ -111,26 +116,46 @@ type extractor struct {
 	SkipReturnKeyword string
 }
 
-func (e *extractor) Run(text []byte, buf *strings.Builder, i *int, line *int) ([]Node, error) {
+func (e *extractor) Run(text []byte, buf *strings.Builder, i *int, line *int) (Node, error) {
 	if e == nil {
 		return nil, nil
 	}
 
 	var (
-		char   byte
-		result []Node
+		char      byte
+		head, cur Node
 	)
 
 	bufLine := *line
+
+	insertNode := func(n Node) {
+		if n == nil {
+			return
+		}
+
+		if head == nil {
+			head = n
+		}
+
+		if cur != nil {
+			cur.InsertNext(n)
+		} else {
+			cur = n
+		}
+
+		cur = n.IterNext(func(n Node) bool {
+			return n.Next() != nil
+		})
+	}
 
 	pushNode := func(useLine bool, kind ...Kind) {
 		if buf.Len() == 0 {
 			return
 		}
 		if useLine {
-			result = append(result, NewNode(*line, buf.String(), kind...))
+			insertNode(NewNode(*line, buf.String(), kind...))
 		} else {
-			result = append(result, NewNode(bufLine, buf.String(), kind...))
+			insertNode(NewNode(bufLine, buf.String(), kind...))
 		}
 		buf.Reset()
 		bufLine = *line
@@ -151,14 +176,14 @@ func (e *extractor) Run(text []byte, buf *strings.Builder, i *int, line *int) ([
 			if ee != nil && ee.IncludeOpen { // /* // " `
 				buf.WriteByte(char)
 			} else { // ( {
-				result = append(result, NewNode(bufLine, string(char)))
+				insertNode(NewNode(bufLine, string(char)))
 			}
 			*i++
 			ns, err := ee.Run(text, buf, i, line)
 			if err != nil {
 				return nil, err
 			}
-			result = append(result, ns...)
+			insertNode(ns)
 			continue
 		}
 
@@ -177,16 +202,16 @@ func (e *extractor) Run(text []byte, buf *strings.Builder, i *int, line *int) ([
 				pushNode(false, e.Kind()...)
 			} else {
 				pushNode(true, e.Kind()...)
-				result = append(result, NewNode(*line, string(char)))
+				insertNode(NewNode(*line, string(char)))
 			}
 			lineStep()
-			return result, nil
+			return head, nil
 		}
 
 		if e.SeparatorCharset.Contain(char) {
 			// ' '
 			pushNode(true)
-			result = append(result, NewNode(*line, string(char)))
+			insertNode(NewNode(*line, string(char)))
 		} else {
 			buf.WriteByte(char)
 		}
@@ -194,11 +219,11 @@ func (e *extractor) Run(text []byte, buf *strings.Builder, i *int, line *int) ([
 		lineStep()
 	}
 	pushNode(true)
-	return result, nil
+	return head, nil
 }
 
 func (e *extractor) Kind() []Kind {
-	if e == nil || e.kind == KindRaw {
+	if e == nil || e.kind == KindRaws {
 		return nil
 	}
 

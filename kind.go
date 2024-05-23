@@ -3,12 +3,15 @@ package goast
 type Kind [2]string
 
 var (
-	KindNone               Kind
-	KindRaw                = Kind{"", "Raw"}
-	KindComment            = Kind{"", "Comment"}
-	KindSymbol             = Kind{"", "Symbol"}
-	KindBasicType          = Kind{"", "BasicType"}
-	KindSeparator          = Kind{"", "Separator"} /* separator */
+	KindNone       Kind
+	KindRaws       = Kind{"", "Raw"}
+	KindComments   = Kind{"", "Comment"}
+	KindSymbols    = Kind{"", "Symbol"}
+	KindBasics     = Kind{"", "BasicType"}
+	KindSeparators = Kind{"", "Separator"}
+	KindKeywords   = Kind{"", "Keyword"}
+
+	/* separator */
 	KindSpace              = Kind{" ", "Space"}
 	KindComma              = Kind{",", "Comma"}
 	KindColon              = Kind{":", "Colon"}
@@ -19,22 +22,25 @@ var (
 	KindCurlyBracketRight  = Kind{"}", "CurlyBracketRight"}
 	KindSquareBracketLeft  = Kind{"[", "SquareBracketLeft"}
 	KindSquareBracketRight = Kind{"]", "SquareBracketRight"}
-	KindKeyword            = Kind{"", "Keyword"} /* keyword */
-	KindImport             = Kind{"import", "Import"}
-	KindVar                = Kind{"var", "Var"}
-	KindConst              = Kind{"const", "Const"}
-	KindMap                = Kind{"map", "Map"}
-	KindChannel            = Kind{"chan", "Channel"}
-	KindFunc               = Kind{"func", "Func"}
-	KindType               = Kind{"type", "Type"}
-	KindStruct             = Kind{"struct", "Struct"}
-	KindInterface          = Kind{"interface", "Interface"}
-	KindPackage            = Kind{"package", "Package"}
-	KindFuncName           = Kind{"", "FuncName"}  /* manual define */
-	KindTypeName           = Kind{"", "TypeName"}  /* manual define */
-	KindParamName          = Kind{"", "ParamName"} /* manual define */
-	KindString             = Kind{"", "String"}    /* manual define */
-	KindMethod             = Kind{"", "Method"}    /* manual define */
+
+	/* keyword */
+	KindImport    = Kind{"import", "Import"}
+	KindVar       = Kind{"var", "Var"}
+	KindConst     = Kind{"const", "Const"}
+	KindMap       = Kind{"map", "Map"}
+	KindChannel   = Kind{"chan", "Channel"}
+	KindFunc      = Kind{"func", "Func"}
+	KindType      = Kind{"type", "Type"}
+	KindStruct    = Kind{"struct", "Struct"}
+	KindInterface = Kind{"interface", "Interface"}
+	KindPackage   = Kind{"package", "Package"}
+
+	/* resetter set */
+	KindFuncName  = Kind{"", "FuncName"}
+	KindTypeName  = Kind{"", "TypeName"}
+	KindParamName = Kind{"", "ParamName"}
+	KindString    = Kind{"", "String"}
+	KindMethod    = Kind{"", "Method"}
 )
 
 func (k *Kind) String() string {
@@ -94,7 +100,7 @@ func NewKind(s string) Kind {
 	}
 
 	if len(s) == 1 && _separatorCharset.Contain(s[0]) {
-		return KindSeparator
+		return KindSeparators
 	}
 
 	if buf := []byte(s); hasPrefix(buf, "\"") || hasPrefix(buf, "`") {
@@ -102,16 +108,16 @@ func NewKind(s string) Kind {
 	}
 
 	if _golangKeywords.Contain(s) {
-		return KindKeyword
+		return KindKeywords
 	}
 
 	if _golangBasicType.Contain(s) {
-		return KindBasicType
+		return KindBasics
 	}
 
 	if _golangSymbol.Contain(s) {
-		return KindSymbol
+		return KindSymbols
 	}
 
-	return KindRaw
+	return KindRaws
 }

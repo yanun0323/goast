@@ -24,29 +24,43 @@ func ParseAst(file string) (Ast, error) {
 
 	scs := []Scope{}
 
-	p := 0
+	head := node
 	k := ScopeUnknown
 	line := -1
-	for i, n := range node {
-		if n.Line() == line {
-			continue
+
+	tryAppendScope := func() {
+		if k != ScopeUnknown {
+			scs = append(scs, NewScope(
+				head.Line(),
+				k,
+				head,
+			))
 		}
+
+		if head.Prev() != nil {
+			_ = head.RemovePrev()
+		}
+	}
+
+	_ = node.IterNext(func(n Node) bool {
+		if n.Line() == line {
+			return true
+		}
+
 		line = n.Line()
 		nk := NewScopeKind(n.Text())
 		if nk == ScopeUnknown {
-			continue
+			return true
 		}
 
-		if k != ScopeUnknown {
-			scs = append(scs, NewScope(
-				node[p].Line(),
-				k,
-				node[p:i],
-			))
-		}
-		p = i
+		tryAppendScope()
+
+		head = n
 		k = nk
-	}
+		return true
+	})
+
+	tryAppendScope()
 
 	result := &ast{
 		pkg:   findPackageName(scs),
@@ -74,17 +88,19 @@ func findPackageName(scs []Scope) string {
 	}
 
 	packageKeywordAppeared := false
-	for _, n := range packageScope.Node() {
-		if packageKeywordAppeared && n.Kind() == KindRaw {
-			return n.Text()
+	result := packageScope.Node().IterNext(func(n Node) bool {
+		if packageKeywordAppeared && n.Kind() == KindRaws {
+			return false
 		}
 
 		if n.Kind() == KindPackage {
 			packageKeywordAppeared = true
 		}
-	}
 
-	return ""
+		return true
+	})
+
+	return result.Text()
 }
 
 type ast struct {
