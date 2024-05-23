@@ -3,6 +3,7 @@ package goast
 import "path/filepath"
 
 type Ast interface {
+	Package() string
 	File() string
 	Dir() string
 	Name() string
@@ -21,7 +22,7 @@ func ParseAst(file string) (Ast, error) {
 		return nil, err
 	}
 
-	sc := []Scope{}
+	scs := []Scope{}
 
 	p := 0
 	k := ScopeUnknown
@@ -37,7 +38,7 @@ func ParseAst(file string) (Ast, error) {
 		}
 
 		if k != ScopeUnknown {
-			sc = append(sc, NewScope(
+			scs = append(scs, NewScope(
 				node[p].Line(),
 				k,
 				node[p:i],
@@ -48,22 +49,59 @@ func ParseAst(file string) (Ast, error) {
 	}
 
 	result := &ast{
+		pkg:   findPackageName(scs),
 		file:  file,
 		dir:   filepath.Dir(file),
 		name:  filepath.Base(file),
 		ext:   filepath.Ext(file),
-		scope: sc,
+		scope: scs,
 	}
 
 	return result, nil
 }
 
+func findPackageName(scs []Scope) string {
+	var packageScope Scope
+	for _, sc := range scs {
+		if sc.Kind() == ScopePackage {
+			packageScope = sc
+			break
+		}
+	}
+
+	if packageScope == nil {
+		return ""
+	}
+
+	packageKeywordAppeared := false
+	for _, n := range packageScope.Node() {
+		if packageKeywordAppeared && n.Kind() == KindRaw {
+			return n.Text()
+		}
+
+		if n.Kind() == KindPackage {
+			packageKeywordAppeared = true
+		}
+	}
+
+	return ""
+}
+
 type ast struct {
+	pkg   string
 	file  string
 	dir   string
 	name  string
 	ext   string
 	scope []Scope
+}
+
+func (f *ast) Package() string {
+	if f == nil {
+		return ""
+	}
+
+	return f.pkg
 }
 
 func (f *ast) File() string {

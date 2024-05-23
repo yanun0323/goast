@@ -7,6 +7,7 @@ import (
 
 var ErrOutOfRange = errors.New("out of range")
 
+// extract parses file text content into nodes.
 func extract(text []byte) ([]Node, error) {
 	var (
 		i, line int
@@ -197,7 +198,7 @@ func (e *extractor) Run(text []byte, buf *strings.Builder, i *int, line *int) ([
 }
 
 func (e *extractor) Kind() []Kind {
-	if e == nil || e.kind == KindUnknown {
+	if e == nil || e.kind == KindRaw {
 		return nil
 	}
 

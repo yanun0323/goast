@@ -5,6 +5,7 @@ Node stands for any element in go language.
 */
 type Node interface {
 	Kind() Kind
+	SetKind(Kind)
 	Line() int
 	Print()
 	Text() string
@@ -12,40 +13,11 @@ type Node interface {
 }
 
 func NewNode(line int, text string, kind ...Kind) Node {
-	elem := &node{line: line, text: text}
-
 	if len(kind) != 0 {
-		elem.kind = kind[0]
-		return elem
+		return &node{line: line, kind: kind[0], text: text}
 	}
 
-	if len(text) == 1 && _separatorCharset.Contain(text[0]) {
-		elem.kind = KindSeparator
-		return elem
-	}
-
-	if buf := []byte(text); hasPrefix(buf, "\"") || hasPrefix(buf, "`") {
-		elem.kind = KindString
-		return elem
-	}
-
-	if _golangKeywords.Contain(text) {
-		elem.kind = KindKeyword
-		return elem
-	}
-
-	if _golangBasicType.Contain(text) {
-		elem.kind = KindBasicType
-		return elem
-	}
-
-	if _golangSymbol.Contain(text) {
-		elem.kind = KindSymbol
-		return elem
-	}
-
-	elem.kind = KindUnknown
-	return elem
+	return &node{line: line, kind: NewKind(text), text: text}
 }
 
 type node struct {
@@ -64,10 +36,16 @@ func (n *node) Line() int {
 
 func (n *node) Kind() Kind {
 	if n == nil {
-		return KindUnknown
+		return KindRaw
 	}
 
 	return n.kind
+}
+
+func (n *node) SetKind(k Kind) {
+	if n != nil {
+		n.kind = k
+	}
 }
 
 func (n *node) Valuable() bool {
