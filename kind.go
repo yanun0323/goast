@@ -3,7 +3,7 @@ package goast
 type Kind [2]string
 
 var (
-	KindNone               = Kind{"", ""}
+	KindNone               Kind
 	KindRaw                = Kind{"", "Raw"}
 	KindComment            = Kind{"", "Comment"}
 	KindSymbol             = Kind{"", "Symbol"}
@@ -20,6 +20,7 @@ var (
 	KindSquareBracketLeft  = Kind{"[", "SquareBracketLeft"}
 	KindSquareBracketRight = Kind{"]", "SquareBracketRight"}
 	KindKeyword            = Kind{"", "Keyword"} /* keyword */
+	KindImport             = Kind{"import", "Import"}
 	KindVar                = Kind{"var", "Var"}
 	KindConst              = Kind{"const", "Const"}
 	KindMap                = Kind{"map", "Map"}
@@ -29,9 +30,11 @@ var (
 	KindStruct             = Kind{"struct", "Struct"}
 	KindInterface          = Kind{"interface", "Interface"}
 	KindPackage            = Kind{"package", "Package"}
-	KindName               = Kind{"", "Name"}   /* manual define */
-	KindString             = Kind{"", "String"} /* manual define */
-	KindMethod             = Kind{"", "Method"} /* manual define */
+	KindFuncName           = Kind{"", "FuncName"}  /* manual define */
+	KindTypeName           = Kind{"", "TypeName"}  /* manual define */
+	KindParamName          = Kind{"", "ParamName"} /* manual define */
+	KindString             = Kind{"", "String"}    /* manual define */
+	KindMethod             = Kind{"", "Method"}    /* manual define */
 )
 
 func (k *Kind) String() string {
@@ -44,7 +47,7 @@ func (k *Kind) String() string {
 
 func NewKind(s string) Kind {
 	if len(s) == 0 {
-		return KindRaw
+		return KindNone
 	}
 
 	switch s {
@@ -68,6 +71,8 @@ func NewKind(s string) Kind {
 		return KindSquareBracketLeft
 	case KindSquareBracketRight[0]:
 		return KindSquareBracketRight
+	case KindImport[0]:
+		return KindImport
 	case KindVar[0]:
 		return KindVar
 	case KindConst[0]:

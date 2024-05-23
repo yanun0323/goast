@@ -111,9 +111,34 @@ func (k ScopeKind) String() string {
 		return "Type"
 	case ScopeFunc:
 		return "Func"
+	default:
+		return ""
 	}
+}
 
-	return ""
+func (k ScopeKind) ToKind() Kind {
+	switch k {
+	case ScopeUnknown:
+		return KindRaw
+	case ScopePackage:
+		return KindPackage
+	case ScopeComment:
+		return KindComment
+	case ScopeInnerComment:
+		return KindComment
+	case ScopeImport:
+		return KindImport
+	case ScopeVariable:
+		return KindVar
+	case ScopeConst:
+		return KindConst
+	case ScopeType:
+		return KindType
+	case ScopeFunc:
+		return KindFunc
+	default:
+		return KindNone
+	}
 }
 
 func NewScopeKind(s string) ScopeKind {
