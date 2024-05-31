@@ -156,5 +156,5 @@ func (n *node) Print() {
 		return
 	}
 
-	println("\t", n.Line()+1, " ....", "Node."+n.kind.String(), "....", printTidy(n.text))
+	println("\t", n.Line()+1, " ....", "Node."+n.kind.PointerString(), "....", printTidy(n.text))
 }

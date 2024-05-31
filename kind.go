@@ -43,11 +43,15 @@ var (
 	KindMethod    = Kind{"", "Method"}
 )
 
-func (k *Kind) String() string {
+func (k *Kind) PointerString() string {
 	if k == nil {
 		return ""
 	}
 
+	return string(k[1])
+}
+
+func (k Kind) String() string {
 	return string(k[1])
 }
 

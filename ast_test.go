@@ -13,7 +13,8 @@ func TestParse(t *testing.T) {
 	a.Require(ff != nil, "nil ast check")
 	a.Require(len(ff.Scope()) != 0, "scope length check")
 	for _, sc := range ff.Scope() {
-		sc.Print()
+		_ = sc
+		// sc.Print()
 		// for _, n := range sc.Node() {
 		// 	n.Print()
 		// }

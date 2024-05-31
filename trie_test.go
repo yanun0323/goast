@@ -10,30 +10,30 @@ func TestTrie(t *testing.T) {
 	_ = root.AddText("any", &basic)
 	kind, ok := root.FindText("any")
 	a.Require(ok, "find 'any'")
-	a.Require(kind != nil && *kind == KindBasics, "kind 'any'", kind.String())
+	a.Require(kind != nil && *kind == KindBasics, "kind 'any'", kind.PointerString())
 
 	kind, ok = root.FindText("an")
 	a.Require(ok, "find 'an'")
-	a.Require(kind == nil, "kind 'an'", kind.String())
+	a.Require(kind == nil, "kind 'an'", kind.PointerString())
 
 	kind, ok = root.FindText("ann")
 	a.Require(!ok, "find 'ann'")
-	a.Require(kind == nil, "kind 'ann'", kind.String())
+	a.Require(kind == nil, "kind 'ann'", kind.PointerString())
 
 	comment := KindComments
 	_ = root.AddText("ayy", &comment)
 
 	kind, ok = root.FindText("any")
 	a.Require(ok, "find 'any' 2")
-	a.Require(kind != nil && *kind == KindBasics, "kind 'any' 2", kind.String())
+	a.Require(kind != nil && *kind == KindBasics, "kind 'any' 2", kind.PointerString())
 
 	kind, ok = root.FindText("ayy")
 	a.Require(ok, "find 'ayy'")
-	a.Require(kind != nil && *kind == KindComments, "kind 'ayy'", kind.String())
+	a.Require(kind != nil && *kind == KindComments, "kind 'ayy'", kind.PointerString())
 
 	kind, ok = root.FindByte([]byte("ayy"))
 	a.Require(ok, "find 'ayy' 2")
-	a.Require(kind != nil && *kind == KindComments, "kind 'ayy' 2", kind.String())
+	a.Require(kind != nil && *kind == KindComments, "kind 'ayy' 2", kind.PointerString())
 }
 
 func TestTrieComment(t *testing.T) {
