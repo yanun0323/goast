@@ -88,3 +88,28 @@ func TestNodeTakeNext(t *testing.T) {
 		a.Equal(cur.Next().Prev().Text(), "3")
 	})
 }
+
+func TestNodeRemovePrev(t *testing.T) {
+	a := NewAssert(t)
+
+	a.NoPanic(func() {
+		cur, _ := list("1", "2", "3", "4", "5")
+		cur = cur.Next().Next()
+
+		removed := cur.RemovePrev()
+		a.Equal(removed.Text(), "2")
+		a.Nil(cur.Prev())
+
+		a.Equal(removed.Prev().Text(), "1")
+	})
+}
+
+func TestNodeRemoveNext(t *testing.T) {
+	a := NewAssert(t)
+
+	a.NoPanic(func() {
+		cur, _ := list("1", "2", "3", "4", "5")
+		cur = cur.Next().Next()
+
+	})
+}
