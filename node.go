@@ -126,8 +126,9 @@ func (n *Node) ReplaceNext(nn *Node) (replacedOldPrev *Node, currentOldNext *Nod
 // TakePrev takes the single node after current node, and connects leftover node.
 func (n *Node) TakePrev() *Node {
 	removed := n.Prev()
+
 	n.setPrev(removed.Prev())
-	removed.setNext(n.Prev())
+	n.Prev().setNext(n)
 
 	removed.setNext(nil)
 	removed.setPrev(nil)
@@ -138,8 +139,9 @@ func (n *Node) TakePrev() *Node {
 // TakeNext takes the single node before current node, and connects leftover node.
 func (n *Node) TakeNext() *Node {
 	removed := n.Next()
+
 	n.setNext(removed.Next())
-	removed.setPrev(n.Next())
+	n.Next().setPrev(n)
 
 	removed.setNext(nil)
 	removed.setPrev(nil)
