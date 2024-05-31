@@ -33,7 +33,6 @@ var (
 	_typeResetter = &kindResetter{
 		KindChangeTable:  map[int]Kind{1: KindTypeName},
 		ChangeableKind:   newSet(KindRaws),
-		UnchangeableKind: nil,
 		ReturnKind:       newSet(KindInterface, KindStruct, KindKeywords),
 	}
 
@@ -45,7 +44,6 @@ var (
 		TriggerKind:      newSet(KindFunc),
 		KindChangeTable:  map[int]Kind{1: KindFuncName},
 		ChangeableKind:   newSet(KindRaws),
-		UnchangeableKind: nil,
 		ReturnKind:       newSet(KindParenthesisLeft, KindCurlyBracketLeft),
 	}
 
@@ -53,7 +51,6 @@ var (
 		TriggerKind:      newSet(KindParenthesisLeft),
 		KindChangeTable:  map[int]Kind{1: KindParamName},
 		ChangeableKind:   newSet(KindRaws),
-		UnchangeableKind: nil,
 		ReturnKind:       newSet(KindParenthesisRight),
 	}
 
