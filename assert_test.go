@@ -40,3 +40,23 @@ func (a Assert) Require(ok bool, msg ...string) {
 
 	a.t.Fatalf("require: %s", a.t.Name())
 }
+
+func (a Assert) NoPanic(fn func()) {
+	a.t.Helper()
+	fn()
+}
+
+func (a Assert) Panic(fn func()) {
+	a.t.Helper()
+
+	defer func() {
+		a.t.Helper()
+		r := recover()
+		if r == nil {
+			return
+		}
+		a.t.Fatalf("%s: should be panic", a.t.Name())
+	}()
+
+	fn()
+}

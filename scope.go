@@ -14,10 +14,10 @@ type Scope interface {
 	Kind() ScopeKind
 	Line() int
 	Print()
-	Node() Node
+	Node() *Node
 }
 
-func NewScope(line int, kind ScopeKind, node Node) Scope {
+func NewScope(line int, kind ScopeKind, node *Node) Scope {
 	return &scope{
 		line: line,
 		kind: kind,
@@ -28,7 +28,7 @@ func NewScope(line int, kind ScopeKind, node Node) Scope {
 type scope struct {
 	line int
 	kind ScopeKind
-	node Node
+	node *Node
 }
 
 func (d *scope) Line() int {
@@ -47,7 +47,7 @@ func (d *scope) Kind() ScopeKind {
 	return d.kind
 }
 
-func (d *scope) Node() Node {
+func (d *scope) Node() *Node {
 	return d.node
 }
 
@@ -60,7 +60,7 @@ func (d *scope) Print() {
 
 	buf := map[int][]string{}
 	lines := []int{}
-	_ = d.Node().IterNext(func(n Node) bool {
+	_ = d.Node().IterNext(func(n *Node) bool {
 		if _, ok := buf[n.Line()]; !ok {
 			lines = append(lines, n.Line())
 		}

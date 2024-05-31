@@ -42,7 +42,7 @@ func ParseAst(file string) (Ast, error) {
 		}
 	}
 
-	_ = node.IterNext(func(n Node) bool {
+	_ = node.IterNext(func(n *Node) bool {
 		if n.Line() == line {
 			return true
 		}
@@ -88,7 +88,7 @@ func findPackageName(scs []Scope) string {
 	}
 
 	packageKeywordAppeared := false
-	result := packageScope.Node().IterNext(func(n Node) bool {
+	result := packageScope.Node().IterNext(func(n *Node) bool {
 		if packageKeywordAppeared && n.Kind() == KindRaws {
 			return false
 		}

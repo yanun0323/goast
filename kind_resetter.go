@@ -1,6 +1,6 @@
 package goast
 
-func kindReset(n Node) {
+func kindReset(n *Node) {
 	_ = _commonResetter.Run(n)
 }
 
@@ -31,9 +31,11 @@ var (
 	_variableResetter = &kindResetter{}
 
 	_typeResetter = &kindResetter{
-		KindChangeTable:  map[int]Kind{1: KindTypeName},
-		ChangeableKind:   newSet(KindRaws),
-		ReturnKind:       newSet(KindInterface, KindStruct, KindKeywords),
+		TriggerKind:     newSet(KindType),
+		TriggerLimit:    -1,
+		KindChangeTable: map[int]Kind{1: KindTypeName},
+		ChangeableKind:  newSet(KindRaws),
+		ReturnKind:      newSet(KindInterface, KindStruct, KindKeywords),
 	}
 
 	_structCurlyBracketResetter = &kindResetter{}
@@ -41,17 +43,19 @@ var (
 	_interfaceCurlyBracketResetter = &kindResetter{}
 
 	_funcResetter = &kindResetter{
-		TriggerKind:      newSet(KindFunc),
-		KindChangeTable:  map[int]Kind{1: KindFuncName},
-		ChangeableKind:   newSet(KindRaws),
-		ReturnKind:       newSet(KindParenthesisLeft, KindCurlyBracketLeft),
+		TriggerKind:     newSet(KindFunc),
+		TriggerLimit:    -1,
+		KindChangeTable: map[int]Kind{1: KindFuncName},
+		ChangeableKind:  newSet(KindRaws),
+		ReturnKind:      newSet(KindParenthesisLeft, KindCurlyBracketLeft),
 	}
 
 	_funcParenthesisResetter = &kindResetter{
-		TriggerKind:      newSet(KindParenthesisLeft),
-		KindChangeTable:  map[int]Kind{1: KindParamName},
-		ChangeableKind:   newSet(KindRaws),
-		ReturnKind:       newSet(KindParenthesisRight),
+		TriggerKind:     newSet(KindParenthesisLeft),
+		TriggerLimit:    -1,
+		KindChangeTable: map[int]Kind{1: KindParamName},
+		ChangeableKind:  newSet(KindRaws),
+		ReturnKind:      newSet(KindParenthesisRight),
 	}
 
 	_parenthesisResetter = &kindResetter{}
@@ -59,24 +63,25 @@ var (
 
 // kindResetter re-set the node kind with node's position of scope
 type kindResetter struct {
-	TriggerKind      set[Kind]
-	KindChangeTable  map[int]Kind
-	ChangeableKind   set[Kind]
-	UnchangeableKind set[Kind]
-	ReturnKind       set[Kind]
+	TriggerKind     set[Kind]
+	TriggerLimit    int
+	KindChangeTable map[int]Kind
+	ChangeableKind  set[Kind]
+	ReturnKind      set[Kind]
 }
 
-func (kr *kindResetter) Run(head Node) Node {
-	var deeperResetterResultNode Node
+func (kr *kindResetter) Run(head *Node) *Node {
+	var deeperResetterResult *Node
 
 	triggered := false
 	triggerIndex := 0
 	deeperResetter := _deeperResetterTable[kr]
+	triggerLimit := kr.TriggerLimit
 
-	return head.IterNext(func(n Node) bool {
-		if deeperResetterResultNode != nil {
-			if deeperResetterResultNode == n {
-				deeperResetterResultNode = nil
+	return head.IterNext(func(n *Node) bool {
+		if deeperResetterResult != nil {
+			if deeperResetterResult == n {
+				deeperResetterResult = nil
 			}
 			return true
 		}
@@ -89,7 +94,7 @@ func (kr *kindResetter) Run(head Node) Node {
 		}
 
 		if resetter, ok := deeperResetter[kind]; ok && resetter != nil {
-			deeperResetterResultNode = resetter.Run(n)
+			deeperResetterResult = resetter.Run(n)
 			return true
 		}
 
@@ -99,15 +104,14 @@ func (kr *kindResetter) Run(head Node) Node {
 			return true
 		}
 
-		if !triggered {
-			return true
-		}
-
-		if kr.UnchangeableKind.Contain(kind) || !kr.ChangeableKind.Contain(kind) {
+		if triggerLimit == 0 || !triggered || !kr.ChangeableKind.Contain(kind) {
 			return true
 		}
 
 		triggerIndex++
+		if triggerLimit > 0 {
+			triggerLimit--
+		}
 
 		if k, ok := kr.KindChangeTable[triggerIndex]; ok && k != KindNone {
 			n.SetKind(k)

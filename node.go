@@ -3,46 +3,26 @@ package goast
 /*
 Node stands for any element in go language.
 */
-type Node interface {
-	Kind() Kind
-	SetKind(Kind)
-	Line() int
-	Print()
-	Text() string
-	Valuable() bool
 
-	Prev() Node
-	Next() Node
-	InsertPrev(Node)
-	InsertNext(Node)
-	RemovePrev() Node
-	RemoveNext() Node
-	IterPrev(func(Node) bool) Node
-	IterNext(func(Node) bool) Node
-
-	setPrev(Node)
-	setNext(Node)
-}
-
-func NewNode(line int, text string, kind ...Kind) Node {
+func NewNode(line int, text string, kind ...Kind) *Node {
 	if len(kind) != 0 {
-		return &node{line: line, kind: kind[0], text: text}
+		return &Node{line: line, kind: kind[0], text: text}
 	}
 
-	return &node{line: line, kind: NewKind(text), text: text}
+	return &Node{line: line, kind: NewKind(text), text: text}
 }
 
-type node struct {
+type Node struct {
 	line int
 	kind Kind
 	text string
 
-	prev Node
-	next Node
+	prev *Node
+	next *Node
 }
 
-func (n *node) loop(iter func(Node) Node, fn func(Node) bool) Node {
-	for nn := Node(n); nn != nil; nn = iter(nn) {
+func (n *Node) loop(iter func(*Node) *Node, fn func(*Node) bool) *Node {
+	for nn := n; nn != nil; nn = iter(nn) {
 		if fn(nn) {
 			continue
 		}
@@ -53,15 +33,15 @@ func (n *node) loop(iter func(Node) Node, fn func(Node) bool) Node {
 	return nil
 }
 
-func (n *node) IterPrev(fn func(Node) bool) Node {
-	return n.loop(func(n Node) Node { return n.Prev() }, fn)
+func (n *Node) IterPrev(fn func(*Node) bool) *Node {
+	return n.loop(func(nn *Node) *Node { return nn.Prev() }, fn)
 }
 
-func (n *node) IterNext(fn func(Node) bool) Node {
-	return n.loop(func(n Node) Node { return n.Next() }, fn)
+func (n *Node) IterNext(fn func(*Node) bool) *Node {
+	return n.loop(func(nn *Node) *Node { return nn.Next() }, fn)
 }
 
-func (n *node) Prev() Node {
+func (n *Node) Prev() *Node {
 	if n != nil {
 		return n.prev
 	}
@@ -69,7 +49,7 @@ func (n *node) Prev() Node {
 	return nil
 }
 
-func (n *node) Next() Node {
+func (n *Node) Next() *Node {
 	if n != nil {
 		return n.next
 	}
@@ -77,43 +57,115 @@ func (n *node) Next() Node {
 	return nil
 }
 
-func (n *node) setPrev(nn Node) {
-	if n != nil {
-		n.prev = nn
-	}
-}
+// InsertPrev inserts this node into current node's before,
+// then returns old previous/next node of inserted node.
+func (n *Node) InsertPrev(nn *Node) (insertedOldPrev *Node, insertedOldNext *Node) {
+	oldPrev, oldNext := n.Prev(), nn.Next()
+	nPrev := n.Prev()
 
-func (n *node) setNext(nn Node) {
-	if n != nil {
-		n.next = nn
-	}
-}
-
-func (n *node) InsertPrev(nn Node) {
 	n.setPrev(nn)
 	nn.setNext(n)
+
+	nn.setPrev(nPrev)
+	nPrev.setNext(nn)
+
+	oldPrev.setNext(nil)
+	oldNext.setPrev(nil)
+
+	return oldPrev, oldNext
 }
 
-func (n *node) InsertNext(nn Node) {
+// InsertNext inserts this node into current node's after,
+// then returns old previous/next node of inserted node.
+func (n *Node) InsertNext(nn *Node) (insertedOldPrev *Node, insertedOldNext *Node) {
+	oldPrev, oldNext := nn.Prev(), nn.Next()
+	nNext := n.Next()
+
 	n.setNext(nn)
 	nn.setPrev(n)
+
+	nn.setNext(nNext)
+	nNext.setPrev(nn)
+
+	oldPrev.setNext(nil)
+	oldNext.setPrev(nil)
+
+	return oldPrev, oldNext
 }
 
-func (n *node) RemovePrev() Node {
-	nn := n.Prev()
+// ReplacePrev replaces this node into current node's before,
+// then returns the old previous node of current node and
+// the old next node of replaced node.
+func (n *Node) ReplacePrev(nn *Node) (currentOldPrev *Node, replacedOldNext *Node) {
+	oldPrev, oldNext := n.Prev(), nn.Next()
+
+	n.setPrev(nn)
+	nn.setNext(n)
+
+	oldPrev.setNext(nil)
+	oldNext.setPrev(nil)
+
+	return oldPrev, oldNext
+}
+
+// ReplaceNext replaces this node into current node's after,
+// then returns the old previous node of replaced node and
+// the old next node of current node.
+func (n *Node) ReplaceNext(nn *Node) (replacedOldPrev *Node, currentOldNext *Node) {
+	oldPrev, oldNext := nn.Prev(), n.Next()
+
+	n.setNext(nn)
+	nn.setPrev(n)
+
+	oldPrev.setNext(nil)
+	oldNext.setPrev(nil)
+
+	return oldPrev, oldNext
+}
+
+// TakePrev takes the single node after current node, and connects leftover node.
+func (n *Node) TakePrev() *Node {
+	removed := n.Prev()
+	n.setPrev(removed.Prev())
+	removed.setNext(n.Prev())
+
+	removed.setNext(nil)
+	removed.setPrev(nil)
+
+	return removed
+}
+
+// TakeNext takes the single node before current node, and connects leftover node.
+func (n *Node) TakeNext() *Node {
+	removed := n.Next()
+	n.setNext(removed.Next())
+	removed.setPrev(n.Next())
+
+	removed.setNext(nil)
+	removed.setPrev(nil)
+
+	return removed
+}
+
+// RemovePrev removes node after current node, and returns removed node with it's all previous node.
+func (n *Node) RemovePrev() *Node {
+	removed := n.Prev()
 	n.setPrev(nil)
-	nn.setNext(nil)
-	return nn
+	removed.setNext(nil)
+
+	return removed
 }
 
-func (n *node) RemoveNext() Node {
-	nn := n.Next()
+// RemoveNext removes node next current node, and returns removed node with it's all next node.
+func (n *Node) RemoveNext() *Node {
+	removed := n.Next()
 	n.setNext(nil)
-	nn.setPrev(nil)
-	return nn
+	removed.setPrev(nil)
+
+	return removed
 }
 
-func (n *node) Line() int {
+func (n *Node) Line() int {
 	if n == nil {
 		return 0
 	}
@@ -121,7 +173,7 @@ func (n *node) Line() int {
 	return n.line
 }
 
-func (n *node) Kind() Kind {
+func (n *Node) Kind() Kind {
 	if n == nil {
 		return KindRaws
 	}
@@ -129,13 +181,13 @@ func (n *node) Kind() Kind {
 	return n.kind
 }
 
-func (n *node) SetKind(k Kind) {
+func (n *Node) SetKind(k Kind) {
 	if n != nil {
 		n.kind = k
 	}
 }
 
-func (n *node) Valuable() bool {
+func (n *Node) Valuable() bool {
 	if n == nil {
 		return false
 	}
@@ -143,18 +195,29 @@ func (n *node) Valuable() bool {
 	return len(n.text) != 0
 }
 
-func (n *node) Text() string {
+func (n *Node) Text() string {
 	if n == nil {
 		return ""
 	}
-
 	return n.text
 }
 
-func (n *node) Print() {
+func (n *Node) Print() {
 	if n == nil {
 		return
 	}
 
-	println("\t", n.Line()+1, " ....", "Node."+n.kind.PointerString(), "....", printTidy(n.text))
+	println("\t", n.Line()+1, " ....", "*Node."+n.kind.PointerString(), "....", printTidy(n.text))
+}
+
+func (n *Node) setPrev(nn *Node) {
+	if n != nil {
+		n.prev = nn
+	}
+}
+
+func (n *Node) setNext(nn *Node) {
+	if n != nil {
+		n.next = nn
+	}
 }

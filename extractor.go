@@ -8,7 +8,7 @@ import (
 var ErrOutOfRange = errors.New("out of range")
 
 // extract parses file text content into nodes.
-func extract(text []byte) (Node, error) {
+func extract(text []byte) (*Node, error) {
 	var (
 		i, line int
 		buf     strings.Builder
@@ -116,19 +116,19 @@ type extractor struct {
 	SkipReturnKeyword string
 }
 
-func (e *extractor) Run(text []byte, buf *strings.Builder, i *int, line *int) (Node, error) {
+func (e *extractor) Run(text []byte, buf *strings.Builder, i *int, line *int) (*Node, error) {
 	if e == nil {
 		return nil, nil
 	}
 
 	var (
 		char      byte
-		head, cur Node
+		head, cur *Node
 	)
 
 	bufLine := *line
 
-	insertNode := func(n Node) {
+	insertNode := func(n *Node) {
 		if n == nil {
 			return
 		}
@@ -138,12 +138,12 @@ func (e *extractor) Run(text []byte, buf *strings.Builder, i *int, line *int) (N
 		}
 
 		if cur != nil {
-			cur.InsertNext(n)
+			cur.ReplaceNext(n)
 		} else {
 			cur = n
 		}
 
-		cur = n.IterNext(func(n Node) bool {
+		cur = n.IterNext(func(n *Node) bool {
 			return n.Next() != nil
 		})
 	}

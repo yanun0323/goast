@@ -21,7 +21,7 @@ func Print(msg string, d decimal.Decimal) {
 	a.Require(err == nil, "extract no error", fmt.Sprintf("%+v", err))
 
 	count := 0
-	_ = n.IterNext(func(n Node) bool {
+	_ = n.IterNext(func(n *Node) bool {
 		// n.Print()
 		count++
 		return true

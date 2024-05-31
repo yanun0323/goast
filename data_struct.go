@@ -7,7 +7,7 @@ func newSet[T comparable](elem ...T) set[T] {
 	for i := range elem {
 		s.Insert(elem[i])
 	}
-	
+
 	return s
 }
 
