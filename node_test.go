@@ -281,3 +281,20 @@ func TestNodeReplace(t *testing.T) {
 		a.assertNode(next, r, "4", "5")
 	})
 }
+
+func TestIsolate(t *testing.T) {
+	a := NewAssert(t)
+	head, tail := list("1", "2", "3")
+
+	mid := head.Next()
+	mid.Isolate()
+
+	a.Nil(head.Prev())
+	a.Nil(head.Next())
+
+	a.Nil(tail.Prev())
+	a.Nil(tail.Next())
+
+	a.Nil(mid.Prev())
+	a.Nil(mid.Next())
+}
