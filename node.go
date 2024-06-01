@@ -1,5 +1,10 @@
 package goast
 
+import (
+	"slices"
+	"strings"
+)
+
 /*
 Node stands for any element in go language.
 */
@@ -57,10 +62,10 @@ func (n *Node) Next() *Node {
 	return nil
 }
 
-// InsertPrev inserts this node into current node's before,
-// then returns old previous/next node of inserted node.
+// InsertPrev inserts incoming node into current node's before,
+// then returns old previous/next node of incoming node.
 func (n *Node) InsertPrev(nn *Node) (insertedOldPrev *Node, insertedOldNext *Node) {
-	oldPrev, oldNext := n.Prev(), nn.Next()
+	oldPrev, oldNext := nn.Prev(), nn.Next()
 	nPrev := n.Prev()
 
 	n.setPrev(nn)
@@ -75,8 +80,8 @@ func (n *Node) InsertPrev(nn *Node) (insertedOldPrev *Node, insertedOldNext *Nod
 	return oldPrev, oldNext
 }
 
-// InsertNext inserts this node into current node's after,
-// then returns old previous/next node of inserted node.
+// InsertNext inserts incoming node into current node's after,
+// then returns old previous/next node of incoming node.
 func (n *Node) InsertNext(nn *Node) (insertedOldPrev *Node, insertedOldNext *Node) {
 	oldPrev, oldNext := nn.Prev(), nn.Next()
 	nNext := n.Next()
@@ -93,9 +98,9 @@ func (n *Node) InsertNext(nn *Node) (insertedOldPrev *Node, insertedOldNext *Nod
 	return oldPrev, oldNext
 }
 
-// ReplacePrev replaces this node into current node's before,
+// ReplacePrev replaces incoming node into current node's before,
 // then returns the old previous node of current node and
-// the old next node of replaced node.
+// the old next node of incoming node.
 func (n *Node) ReplacePrev(nn *Node) (currentOldPrev *Node, replacedOldNext *Node) {
 	oldPrev, oldNext := n.Prev(), nn.Next()
 
@@ -108,8 +113,8 @@ func (n *Node) ReplacePrev(nn *Node) (currentOldPrev *Node, replacedOldNext *Nod
 	return oldPrev, oldNext
 }
 
-// ReplaceNext replaces this node into current node's after,
-// then returns the old previous node of replaced node and
+// ReplaceNext replaces incoming node into current node's after,
+// then returns the old previous node of incoming node and
 // the old next node of current node.
 func (n *Node) ReplaceNext(nn *Node) (replacedOldPrev *Node, currentOldNext *Node) {
 	oldPrev, oldNext := nn.Prev(), n.Next()
@@ -165,6 +170,59 @@ func (n *Node) RemoveNext() *Node {
 	removed.setPrev(nil)
 
 	return removed
+}
+
+// CombinePrev combines all values of incoming nodes into current node..
+//
+// e.g. (nn3 - nn2 - nn1 - n)
+func (n *Node) CombinePrev(k Kind, nns ...*Node) {
+	if len(nns) == 0 {
+		return
+	}
+
+	buf := make([]string, 0, len(nns)+1)
+	buf = append(buf, n.Text())
+	for _, nn := range nns {
+		buf = append(buf, nn.Text())
+
+		nn.Prev().setNext(nil)
+		nn.Next().setPrev(nil)
+
+		nn.setPrev(nil)
+		nn.setNext(nil)
+	}
+
+	slices.Reverse(buf)
+
+	n.text = strings.Join(buf, "")
+	n.kind = k
+}
+
+// CombineNext combines all values of incoming nodes into current node.
+//
+// e.g. (n - nn1 - nn2 - nn3)
+func (n *Node) CombineNext(k Kind, nns ...*Node) {
+	if len(nns) == 0 {
+		return
+	}
+
+	buf := make([]string, 0, len(nns)+1)
+	buf = append(buf, n.Text())
+	for _, nn := range nns {
+		buf = append(buf, nn.Text())
+	}
+
+	n.text = strings.Join(buf, "")
+	n.kind = k
+}
+
+// Isolated disconnects current node from others.
+func (n *Node) Isolate() {
+	n.Prev().setNext(nil)
+	n.Next().setPrev(nil)
+
+	n.setPrev(nil)
+	n.setNext(nil)
 }
 
 func (n *Node) Line() int {
