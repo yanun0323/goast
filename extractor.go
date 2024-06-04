@@ -29,21 +29,21 @@ var (
 	}
 
 	_parenthesisExtractor = &extractor{
-		kind:              KindKeywords,
+		kind:              KindKeyword,
 		SeparatorCharset:  _separatorCharset,
 		ReturnKeyword:     ")",
 		SkipReturnKeyword: "",
 	}
 
 	_curlyBracketExtractor = &extractor{
-		kind:              KindKeywords,
+		kind:              KindKeyword,
 		SeparatorCharset:  _separatorCharset,
 		ReturnKeyword:     "}",
 		SkipReturnKeyword: "",
 	}
 
 	_commentExtractor = &extractor{
-		kind:              KindComments,
+		kind:              KindComment,
 		IncludeOpen:       true,
 		SeparatorCharset:  nil,
 		ReturnKeyword:     "\n",
@@ -51,7 +51,7 @@ var (
 	}
 
 	_innerCommentExtractor = &extractor{
-		kind:              KindComments,
+		kind:              KindComment,
 		IncludeOpen:       true,
 		IncludeClose:      true,
 		SeparatorCharset:  nil,
@@ -223,7 +223,7 @@ func (e *extractor) Run(text []byte, buf *strings.Builder, i *int, line *int) (*
 }
 
 func (e *extractor) Kind() []Kind {
-	if e == nil || e.kind == KindRaws {
+	if e == nil || e.kind == KindRaw {
 		return nil
 	}
 

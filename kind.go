@@ -3,18 +3,20 @@ package goast
 type Kind [2]string
 
 var (
-	KindNone       Kind
-	KindRaws       = Kind{"", "Raw"}
-	KindComments   = Kind{"", "Comment"}
-	KindSymbols    = Kind{"", "Symbol"}
-	KindBasics     = Kind{"", "BasicType"}
-	KindSeparators = Kind{"", "Separator"}
-	KindKeywords   = Kind{"", "Keyword"}
+	KindNone      Kind
+	KindRaw       = Kind{"", "Raw"}
+	KindComment   = Kind{"", "Comment"}
+	KindSymbol    = Kind{"", "Symbol"}
+	KindBasic     = Kind{"", "BasicType"}
+	KindSeparator = Kind{"", "Separator"}
+	KindKeyword   = Kind{"", "Keyword"}
 
 	/* separator */
+	KindTab                = Kind{"\t", "Tab"}
 	KindSpace              = Kind{" ", "Space"}
 	KindComma              = Kind{",", "Comma"}
 	KindColon              = Kind{":", "Colon"}
+	KindNewLine            = Kind{"\n", "NewLine"}
 	KindSemicolon          = Kind{";", "Semicolon"}
 	KindParenthesisLeft    = Kind{"(", "ParenthesisLeft"}
 	KindParenthesisRight   = Kind{")", "ParenthesisRight"}
@@ -22,7 +24,6 @@ var (
 	KindCurlyBracketRight  = Kind{"}", "CurlyBracketRight"}
 	KindSquareBracketLeft  = Kind{"[", "SquareBracketLeft"}
 	KindSquareBracketRight = Kind{"]", "SquareBracketRight"}
-
 	/* keyword */
 	KindImport    = Kind{"import", "Import"}
 	KindVar       = Kind{"var", "Var"}
@@ -36,12 +37,13 @@ var (
 	KindPackage   = Kind{"package", "Package"}
 
 	/* resetter set */
-	KindFuncName  = Kind{"", "FuncName"}
-	KindTypeName  = Kind{"", "TypeName"}
-	KindParamName = Kind{"", "ParamName"}
-	KindParamType = Kind{"", "ParamType"}
-	KindString    = Kind{"", "String"}
-	KindMethod    = Kind{"", "Method"}
+	KindFuncName      = Kind{"", "FuncName"}
+	KindTypeName      = Kind{"", "TypeName"}
+	KindTypeAliasType = Kind{"", "TypeAliasType"}
+	KindParamName     = Kind{"", "ParamName"}
+	KindParamType     = Kind{"", "ParamType"}
+	KindString        = Kind{"", "String"}
+	KindMethod        = Kind{"", "Method"}
 )
 
 func (k *Kind) PointerString() string {
@@ -62,12 +64,16 @@ func NewKind(s string) Kind {
 	}
 
 	switch s {
+	case KindTab[0]:
+		return KindTab
 	case KindSpace[0]:
 		return KindSpace
 	case KindComma[0]:
 		return KindComma
 	case KindColon[0]:
 		return KindColon
+	case KindNewLine[0]:
+		return KindNewLine
 	case KindSemicolon[0]:
 		return KindSemicolon
 	case KindParenthesisLeft[0]:
@@ -105,7 +111,7 @@ func NewKind(s string) Kind {
 	}
 
 	if len(s) == 1 && _separatorCharset.Contain(s[0]) {
-		return KindSeparators
+		return KindSeparator
 	}
 
 	if buf := []byte(s); hasPrefix(buf, "\"") || hasPrefix(buf, "`") {
@@ -113,16 +119,16 @@ func NewKind(s string) Kind {
 	}
 
 	if _golangKeywords.Contain(s) {
-		return KindKeywords
+		return KindKeyword
 	}
 
 	if _golangBasicType.Contain(s) {
-		return KindBasics
+		return KindBasic
 	}
 
 	if _golangSymbol.Contain(s) {
-		return KindSymbols
+		return KindSymbol
 	}
 
-	return KindRaws
+	return KindRaw
 }

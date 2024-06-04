@@ -121,13 +121,13 @@ func (k ScopeKind) String() string {
 func (k ScopeKind) ToKind() Kind {
 	switch k {
 	case ScopeUnknown:
-		return KindRaws
+		return KindRaw
 	case ScopePackage:
 		return KindPackage
 	case ScopeComment:
-		return KindComments
+		return KindComment
 	case ScopeInnerComment:
-		return KindComments
+		return KindComment
 	case ScopeImport:
 		return KindImport
 	case ScopeVariable:

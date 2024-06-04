@@ -89,7 +89,7 @@ func findPackageName(scs []Scope) string {
 
 	packageKeywordAppeared := false
 	result := packageScope.Node().IterNext(func(n *Node) bool {
-		if packageKeywordAppeared && n.Kind() == KindRaws {
+		if packageKeywordAppeared && n.Kind() == KindRaw {
 			return false
 		}
 

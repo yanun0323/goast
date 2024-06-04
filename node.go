@@ -259,7 +259,7 @@ func (n *Node) Isolate() {
 
 func (n *Node) Line() int {
 	if n == nil {
-		return 0
+		return -2
 	}
 
 	return n.line
@@ -267,7 +267,7 @@ func (n *Node) Line() int {
 
 func (n *Node) Kind() Kind {
 	if n == nil {
-		return KindRaws
+		return KindRaw
 	}
 
 	return n.kind
@@ -279,14 +279,6 @@ func (n *Node) SetKind(k Kind) {
 	}
 }
 
-func (n *Node) Valuable() bool {
-	if n == nil {
-		return false
-	}
-
-	return len(n.text) != 0
-}
-
 func (n *Node) Text() string {
 	if n == nil {
 		return ""
@@ -294,12 +286,26 @@ func (n *Node) Text() string {
 	return n.text
 }
 
-func (n *Node) Print() {
+func (n *Node) SetText(text string) {
 	if n == nil {
 		return
 	}
+	n.text = text
+}
 
-	println("\t", n.Line()+1, " ....", "*Node."+n.kind.PointerString(), "....", printTidy(n.text))
+func (n *Node) Print() {
+	if n == nil {
+		println("\t", "<nil>")
+	}
+
+	println("\t", n.Line()+1, " ....", "*Node."+n.Kind().String(), "....", printTidy(n.Text()))
+}
+
+func (n *Node) PrintAllNext() {
+	n.IterNext(func(n *Node) bool {
+		n.Print()
+		return true
+	})
 }
 
 func (n *Node) setPrev(nn *Node) {
