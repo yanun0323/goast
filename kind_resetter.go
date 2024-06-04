@@ -106,20 +106,24 @@ type fnParamResetter struct {
 }
 
 func (r *fnParamResetter) Run(head *Node) *Node {
-	var jumpTo *Node
+	var (
+		jumpTo   *Node
+		nameNode *Node
+	)
 
-	head = head.Next() // ignore first (
+	head = head.Next() // ignore first '('
 	nextIsFirstParam := true
 	isFirstParamANameNode := false // determine by space
 	buf := []*Node{}
 
-	var nameNode *Node
+	resetBuf := func() {
+		buf = []*Node{}
+		nameNode = nil
+		isFirstParamANameNode = false
+	}
+
 	dealBuf := func() {
-		defer func() {
-			buf = []*Node{}
-			nameNode = nil
-			isFirstParamANameNode = false
-		}()
+		defer resetBuf()
 
 		n := nameNode
 		if isFirstParamANameNode {
@@ -154,6 +158,8 @@ func (r *fnParamResetter) Run(head *Node) *Node {
 		case KindSpace:
 			isFirstParamANameNode = nameNode != nil
 			return true
+		case KindParenthesisLeft:
+			return true
 		case KindParenthesisRight:
 			dealBuf()
 			return false
@@ -170,6 +176,7 @@ func (r *fnParamResetter) Run(head *Node) *Node {
 			}
 		case KindFunc:
 			jumpTo = r.skipFuncParam(n)
+			resetBuf()
 			return true
 		}
 
@@ -184,21 +191,43 @@ func (r *fnParamResetter) Run(head *Node) *Node {
 	})
 }
 func (r *fnParamResetter) skipFuncParam(fn *Node) *Node {
+	buf := make([]*Node, 0, 10)
 	parenthesisLeftCount := 0
+
+	defer func() {
+		if len(buf) == 0 {
+			return
+		}
+
+		n := buf[0]
+		next := buf[len(buf)-1].Next()
+		n = n.CombineNext(KindParamType, buf[1:]...)
+		n.ReplaceNext(next)
+	}()
+
+	tryAppendBuf := func(n *Node) bool {
+		if parenthesisLeftCount == 0 {
+			return false
+		}
+		buf = append(buf, n)
+		return true
+	}
+
 	return fn.IterNext(func(n *Node) bool {
 		kind := n.Kind()
 		switch kind {
 		case KindParenthesisLeft:
 			parenthesisLeftCount++
+			buf = append(buf, n)
 			return true
-		case KindParenthesisRight:
+		case KindParenthesisRight: // return symbol
+			keep := tryAppendBuf(n)
 			parenthesisLeftCount--
-			escape := parenthesisLeftCount <= 0
-			return !escape
-		case KindComma:
-			escape := parenthesisLeftCount <= 0
-			return !escape
+			return keep
+		case KindComma: // return symbol
+			return tryAppendBuf(n)
 		default:
+			buf = append(buf, n)
 			return true
 		}
 	})

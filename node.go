@@ -308,9 +308,9 @@ func (n *Node) setPrev(nn *Node) {
 	}
 
 	// TODO: how to prevent no gc
-	// if n.prev != nil {
-	// 	n.prev.next = nil
-	// }
+	if n.prev != nil {
+		n.prev.next = nil
+	}
 
 	n.prev = nn
 }
@@ -321,9 +321,9 @@ func (n *Node) setNext(nn *Node) {
 	}
 
 	// TODO: how to prevent no gc
-	// if n.next != nil {
-	// 	n.next.prev = nil
-	// }
+	if n.next != nil {
+		n.next.prev = nil
+	}
 
 	n.next = nn
 }
