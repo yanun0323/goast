@@ -279,6 +279,12 @@ func TestNodeReplace(t *testing.T) {
 
 		a.assertNode(next, l, "4")
 		a.assertNode(next, r, "4", "5")
+
+		n, _ := list("1", "2")
+		oP, oN := n.ReplaceNext(n.Next())
+		a.assertNode(n, r, "1", "2")
+		a.Nil(oP)
+		a.Nil(oN)
 	})
 }
 
@@ -297,4 +303,28 @@ func TestIsolate(t *testing.T) {
 
 	a.Nil(mid.Prev())
 	a.Nil(mid.Next())
+}
+
+func TestCombine(t *testing.T) {
+	a := NewAssert(t)
+
+	n1, _ := list("1")
+	n2, _ := list("2")
+	n3, _ := list("3")
+	n4, _ := list("4", "5")
+	n5 := n4.Next()
+
+	n1.CombineNext(KindRaws, n2, n3, n4)
+
+	a.Equal(n1.Text(), "1234")
+	a.assertNode(n1, r, "1234")
+
+	a.Nil(n5.Next())
+	a.Nil(n5.Prev())
+
+	var n *Node
+
+	n = n.CombineNext(KindRaws, n1, n5)
+	a.Equal(n.Text(), "12345")
+	a.assertNode(n, r, "12345")
 }

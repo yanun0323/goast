@@ -1,110 +1,82 @@
 package goast
 
-func kindReset(n *Node) {
-	_ = _commonResetter.Run(n)
+func kindReset(n *Node) *Node {
+	return commonResetter().Run(n)
 }
 
-type deeperResetter map[Kind]*kindResetter
+type kindResetter interface {
+	Run(*Node) *Node
+}
 
-var (
-	_deeperResetterTable = map[*kindResetter]deeperResetter{
-		_commonResetter: _commonDeeperResetter,
-		_funcResetter:   _funcDeeperResetter,
+func commonResetter() kindResetter {
+	return &resetter{
+		DeeperResetterTable: map[Kind]kindResetter{
+			KindFunc: funcResetter(),
+		},
 	}
+}
 
-	_commonDeeperResetter = deeperResetter{
-		KindImport: _importResetter,
-		KindVar:    _variableResetter,
-		KindConst:  _variableResetter,
-		KindType:   _typeResetter,
-		KindFunc:   _funcResetter,
-	}
-
-	_funcDeeperResetter = deeperResetter{
-		KindParenthesisLeft: _funcParenthesisResetter,
-	}
-)
-
-var (
-	_commonResetter   = &kindResetter{}
-	_importResetter   = &kindResetter{}
-	_variableResetter = &kindResetter{}
-
-	_typeResetter = &kindResetter{
-		TriggerKind:     newSet(KindType),
-		TriggerLimit:    -1,
-		KindChangeTable: map[int]Kind{1: KindTypeName},
-		ChangeableKind:  newSet(KindRaws),
-		ReturnKind:      newSet(KindInterface, KindStruct, KindKeywords),
-	}
-
-	_structCurlyBracketResetter = &kindResetter{}
-
-	_interfaceCurlyBracketResetter = &kindResetter{}
-
-	_funcResetter = &kindResetter{
+func funcResetter() kindResetter {
+	return &resetter{
 		TriggerKind:     newSet(KindFunc),
 		TriggerLimit:    -1,
 		KindChangeTable: map[int]Kind{1: KindFuncName},
 		ChangeableKind:  newSet(KindRaws),
-		ReturnKind:      newSet(KindParenthesisLeft, KindCurlyBracketLeft),
+		ReturnKind:      newSet(KindCurlyBracketLeft),
+		DeeperResetterTable: map[Kind]kindResetter{
+			KindParenthesisLeft: funcParamResetter(),
+		},
 	}
-
-	_funcParenthesisResetter = &kindResetter{
-		TriggerKind:     newSet(KindParenthesisLeft),
-		TriggerLimit:    -1,
-		KindChangeTable: map[int]Kind{1: KindParamName},
-		ChangeableKind:  newSet(KindRaws),
-		ReturnKind:      newSet(KindParenthesisRight),
-	}
-
-	_parenthesisResetter = &kindResetter{}
-)
-
-// kindResetter re-set the node kind with node's position of scope
-type kindResetter struct {
-	TriggerKind     set[Kind]
-	TriggerLimit    int
-	KindChangeTable map[int]Kind
-	ChangeableKind  set[Kind]
-	ReturnKind      set[Kind]
 }
 
-func (kr *kindResetter) Run(head *Node) *Node {
-	var deeperResetterResult *Node
+func inlineFuncResetter() kindResetter {
+	return &resetter{
+		// TODO: Implement me
+	}
+}
+
+type resetter struct {
+	TriggerKind         set[Kind]
+	TriggerLimit        int
+	KindChangeTable     map[int]Kind
+	ChangeableKind      set[Kind]
+	ReturnKind          set[Kind]
+	DeeperResetterTable map[Kind]kindResetter
+}
+
+func (r *resetter) Run(head *Node) *Node {
+	var jumpTo *Node
 
 	triggered := false
 	triggerIndex := 0
-	deeperResetter := _deeperResetterTable[kr]
-	triggerLimit := kr.TriggerLimit
+	triggerLimit := r.TriggerLimit
 
 	return head.IterNext(func(n *Node) bool {
-		if deeperResetterResult != nil {
-			if deeperResetterResult == n {
-				deeperResetterResult = nil
+		if jumpTo != nil {
+			if jumpTo == n {
+				jumpTo = nil
 			}
 			return true
 		}
 
-		// TODO: Implement me
 		//  ReturnKind > deeperResetter > TriggerKind > ChangeableKind > UnchangeableKind
 		kind := n.Kind()
-		if kr.ReturnKind.Contain(kind) {
+		if r.ReturnKind.Contain(kind) {
 			return false
 		}
 
-		if resetter, ok := deeperResetter[kind]; ok && resetter != nil {
-			deeperResetterResult = resetter.Run(n)
+		if resetter, ok := r.DeeperResetterTable[kind]; ok && resetter != nil {
+			jumpTo = resetter.Run(n)
 			return true
 		}
 
-		if kr.TriggerKind.Contain(kind) {
+		if r.TriggerKind.Contain(kind) {
 			triggered = true
 			triggerIndex = 0
 			return true
 		}
 
-		if triggerLimit == 0 || !triggered || !kr.ChangeableKind.Contain(kind) {
+		if triggerLimit == 0 || !triggered || !r.ChangeableKind.Contain(kind) {
 			return true
 		}
 
@@ -113,10 +85,121 @@ func (kr *kindResetter) Run(head *Node) *Node {
 			triggerLimit--
 		}
 
-		if k, ok := kr.KindChangeTable[triggerIndex]; ok && k != KindNone {
+		if k, ok := r.KindChangeTable[triggerIndex]; ok && k != KindNone {
 			n.SetKind(k)
 		}
 
 		return true
+	})
+}
+
+func funcParamResetter() kindResetter {
+	return &fnParamResetter{
+		DeeperResetterTable: map[Kind]kindResetter{
+			KindFunc: inlineFuncResetter(),
+		},
+	}
+}
+
+type fnParamResetter struct {
+	DeeperResetterTable map[Kind]kindResetter
+}
+
+func (r *fnParamResetter) Run(head *Node) *Node {
+	var jumpTo *Node
+
+	head = head.Next() // ignore first (
+	nextIsFirstParam := true
+	isFirstParamANameNode := false // determine by space
+	buf := []*Node{}
+
+	var nameNode *Node
+	dealBuf := func() {
+		defer func() {
+			buf = []*Node{}
+			nameNode = nil
+			isFirstParamANameNode = false
+		}()
+
+		n := nameNode
+		if isFirstParamANameNode {
+			if len(buf) == 0 {
+				return
+			}
+			n = buf[0]
+			buf = buf[1:]
+		}
+
+		if len(buf) == 0 {
+			n.SetKind(KindParamType)
+			return
+		}
+
+		next := buf[len(buf)-1].Next()
+		n = n.CombineNext(KindParamType, buf...)
+		n.ReplaceNext(next)
+	}
+
+	return head.IterNext(func(n *Node) bool {
+		if jumpTo != nil {
+			if jumpTo == n {
+				jumpTo = nil
+			}
+			return true
+		}
+		kind := n.Kind()
+		switch kind {
+		case KindComments:
+			return true
+		case KindSpace:
+			isFirstParamANameNode = nameNode != nil
+			return true
+		case KindParenthesisRight:
+			dealBuf()
+			return false
+		case KindComma:
+			dealBuf()
+			nextIsFirstParam = true
+			return true
+		case KindRaws:
+			if nextIsFirstParam {
+				n.SetKind(KindParamName)
+				nextIsFirstParam = false
+				nameNode = n
+				return true
+			}
+		case KindFunc:
+			jumpTo = r.skipFuncParam(n)
+			return true
+		}
+
+		if resetter, ok := r.DeeperResetterTable[kind]; ok && resetter != nil {
+			jumpTo = resetter.Run(n)
+			return true
+		}
+
+		buf = append(buf, n)
+
+		return true
+	})
+}
+func (r *fnParamResetter) skipFuncParam(fn *Node) *Node {
+	parenthesisLeftCount := 0
+	return fn.IterNext(func(n *Node) bool {
+		kind := n.Kind()
+		switch kind {
+		case KindParenthesisLeft:
+			parenthesisLeftCount++
+			return true
+		case KindParenthesisRight:
+			parenthesisLeftCount--
+			escape := parenthesisLeftCount <= 0
+			return !escape
+		case KindComma:
+			escape := parenthesisLeftCount <= 0
+			return !escape
+		default:
+			return true
+		}
 	})
 }

@@ -1,18 +1,29 @@
 package goast
 
 import (
+	"os"
 	"reflect"
 	"runtime/debug"
+	"strconv"
 	"strings"
 	"testing"
 )
 
 type Assert struct {
-	t *testing.T
+	t     *testing.T
+	Debug int
 }
 
 func NewAssert(t *testing.T) Assert {
-	return Assert{t: t}
+	d, err := strconv.Atoi(os.Getenv("DEBUG"))
+	if err != nil {
+		d = 0
+	}
+
+	return Assert{
+		t:     t,
+		Debug: d,
+	}
 }
 
 func (a Assert) Nil(value any, msg ...string) {

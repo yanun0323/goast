@@ -22,7 +22,9 @@ func Print(msg string, d decimal.Decimal) {
 
 	count := 0
 	_ = n.IterNext(func(n *Node) bool {
-		// n.Print()
+		if a.Debug == 2 {
+			n.Print()
+		}
 		count++
 		return true
 	})

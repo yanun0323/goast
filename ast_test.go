@@ -13,10 +13,12 @@ func TestParse(t *testing.T) {
 	a.Require(ff != nil, "nil ast check")
 	a.Require(len(ff.Scope()) != 0, "scope length check")
 	for _, sc := range ff.Scope() {
-		_ = sc
-		// sc.Print()
-		// for _, n := range sc.Node() {
-		// 	n.Print()
-		// }
+		if a.Debug == 1 {
+			sc.Print()
+			sc.Node().IterNext(func(n *Node) bool {
+				n.Print()
+				return true
+			})
+		}
 	}
 }

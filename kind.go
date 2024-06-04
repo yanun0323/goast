@@ -39,6 +39,7 @@ var (
 	KindFuncName  = Kind{"", "FuncName"}
 	KindTypeName  = Kind{"", "TypeName"}
 	KindParamName = Kind{"", "ParamName"}
+	KindParamType = Kind{"", "ParamType"}
 	KindString    = Kind{"", "String"}
 	KindMethod    = Kind{"", "Method"}
 )

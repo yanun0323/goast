@@ -65,6 +65,10 @@ func (n *Node) Next() *Node {
 // InsertPrev inserts incoming node into current node's before,
 // then returns old previous/next node of incoming node.
 func (n *Node) InsertPrev(nn *Node) (insertedOldPrev *Node, insertedOldNext *Node) {
+	if n.Prev() == nn {
+		return
+	}
+
 	oldPrev, oldNext := nn.Prev(), nn.Next()
 	nPrev := n.Prev()
 
@@ -83,6 +87,10 @@ func (n *Node) InsertPrev(nn *Node) (insertedOldPrev *Node, insertedOldNext *Nod
 // InsertNext inserts incoming node into current node's after,
 // then returns old previous/next node of incoming node.
 func (n *Node) InsertNext(nn *Node) (insertedOldPrev *Node, insertedOldNext *Node) {
+	if n.Next() == nn {
+		return
+	}
+
 	oldPrev, oldNext := nn.Prev(), nn.Next()
 	nNext := n.Next()
 
@@ -102,6 +110,10 @@ func (n *Node) InsertNext(nn *Node) (insertedOldPrev *Node, insertedOldNext *Nod
 // then returns the old previous node of current node and
 // the old next node of incoming node.
 func (n *Node) ReplacePrev(nn *Node) (currentOldPrev *Node, replacedOldNext *Node) {
+	if n.Prev() == nn {
+		return
+	}
+
 	oldPrev, oldNext := n.Prev(), nn.Next()
 
 	n.setPrev(nn)
@@ -117,6 +129,10 @@ func (n *Node) ReplacePrev(nn *Node) (currentOldPrev *Node, replacedOldNext *Nod
 // then returns the old previous node of incoming node and
 // the old next node of current node.
 func (n *Node) ReplaceNext(nn *Node) (replacedOldPrev *Node, currentOldNext *Node) {
+	if n.Next() == nn {
+		return
+	}
+
 	oldPrev, oldNext := nn.Prev(), n.Next()
 
 	n.setNext(nn)
@@ -131,9 +147,10 @@ func (n *Node) ReplaceNext(nn *Node) (replacedOldPrev *Node, currentOldNext *Nod
 // TakePrev takes the single node after current node, and connects leftover node.
 func (n *Node) TakePrev() *Node {
 	removed := n.Prev()
+	newPrev := removed.Prev()
 
-	n.setPrev(removed.Prev())
-	n.Prev().setNext(n)
+	n.setPrev(newPrev)
+	newPrev.setNext(n)
 
 	removed.setNext(nil)
 	removed.setPrev(nil)
@@ -144,9 +161,10 @@ func (n *Node) TakePrev() *Node {
 // TakeNext takes the single node before current node, and connects leftover node.
 func (n *Node) TakeNext() *Node {
 	removed := n.Next()
+	newNext := removed.Next()
 
-	n.setNext(removed.Next())
-	n.Next().setPrev(n)
+	n.setNext(newNext)
+	newNext.setPrev(n)
 
 	removed.setNext(nil)
 	removed.setPrev(nil)
@@ -172,48 +190,62 @@ func (n *Node) RemoveNext() *Node {
 	return removed
 }
 
-// CombinePrev combines all values of incoming nodes into current node..
+// CombinePrev combines all values of incoming nodes into current node,
+// and returns new node.
 //
 // e.g. (nn3 - nn2 - nn1 - n)
-func (n *Node) CombinePrev(k Kind, nns ...*Node) {
+func (n *Node) CombinePrev(k Kind, nns ...*Node) *Node {
 	if len(nns) == 0 {
-		return
+		return n
+	}
+
+	if n == nil {
+		n = nns[0]
+		nns = nns[1:]
 	}
 
 	buf := make([]string, 0, len(nns)+1)
 	buf = append(buf, n.Text())
 	for _, nn := range nns {
 		buf = append(buf, nn.Text())
-
-		nn.Prev().setNext(nil)
-		nn.Next().setPrev(nil)
-
-		nn.setPrev(nil)
-		nn.setNext(nil)
+		// make node recyclable to gc
+		nn.Isolate()
 	}
 
 	slices.Reverse(buf)
 
 	n.text = strings.Join(buf, "")
 	n.kind = k
+
+	return n
 }
 
-// CombineNext combines all values of incoming nodes into current node.
+// CombineNext combines all values of incoming nodes into current node,
+// and returns new node.
 //
 // e.g. (n - nn1 - nn2 - nn3)
-func (n *Node) CombineNext(k Kind, nns ...*Node) {
+func (n *Node) CombineNext(k Kind, nns ...*Node) *Node {
 	if len(nns) == 0 {
-		return
+		return n
+	}
+
+	if n == nil {
+		n = nns[0]
+		nns = nns[1:]
 	}
 
 	buf := make([]string, 0, len(nns)+1)
 	buf = append(buf, n.Text())
 	for _, nn := range nns {
 		buf = append(buf, nn.Text())
+		// make node recyclable to gc
+		nn.Isolate()
 	}
 
 	n.text = strings.Join(buf, "")
 	n.kind = k
+
+	return n
 }
 
 // Isolated disconnects current node from others.
@@ -271,13 +303,27 @@ func (n *Node) Print() {
 }
 
 func (n *Node) setPrev(nn *Node) {
-	if n != nil {
-		n.prev = nn
+	if n == nil {
+		return
 	}
+
+	// TODO: how to prevent no gc
+	// if n.prev != nil {
+	// 	n.prev.next = nil
+	// }
+
+	n.prev = nn
 }
 
 func (n *Node) setNext(nn *Node) {
-	if n != nil {
-		n.next = nn
+	if n == nil {
+		return
 	}
+
+	// TODO: how to prevent no gc
+	// if n.next != nil {
+	// 	n.next.prev = nil
+	// }
+
+	n.next = nn
 }
