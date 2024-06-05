@@ -161,7 +161,7 @@ func (r typeResetter) otherResetter(head *Node) *Node {
 		case KindComment:
 			return true
 		default:
-			buf = append(buf)
+			buf = append(buf, n)
 			return true
 		}
 	})
