@@ -1,7 +1,7 @@
 // This is a sample file to test ast.
 //
 // This is the package comment.
-package goast
+package example
 
 import (
 	"context"

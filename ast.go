@@ -5,6 +5,7 @@ import (
 
 	"github.com/yanun0323/goast/helper"
 	"github.com/yanun0323/goast/kind"
+	"github.com/yanun0323/goast/scope"
 )
 
 type Ast interface {
@@ -27,14 +28,16 @@ func ParseAst(file string) (Ast, error) {
 		return nil, err
 	}
 
+	_ = generalResetter().Run(node)
+
 	scs := []Scope{}
 
 	head := node
-	k := ScopeUnknown
+	k := scope.Unknown
 	line := -1
 
 	tryAppendScope := func() {
-		if k != ScopeUnknown {
+		if k != scope.Unknown {
 			scs = append(scs, NewScope(
 				head.Line(),
 				k,
@@ -53,8 +56,8 @@ func ParseAst(file string) (Ast, error) {
 		}
 
 		line = n.Line()
-		nk := NewScopeKind(n.Text())
-		if nk == ScopeUnknown {
+		nk := newScopeKind(n.Text())
+		if nk == scope.Unknown {
 			return true
 		}
 
@@ -82,7 +85,7 @@ func ParseAst(file string) (Ast, error) {
 func findPackageName(scs []Scope) string {
 	var packageScope Scope
 	for _, sc := range scs {
-		if sc.Kind() == ScopePackage {
+		if sc.Kind() == scope.Package {
 			packageScope = sc
 			break
 		}

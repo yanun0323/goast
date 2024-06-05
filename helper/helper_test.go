@@ -34,7 +34,6 @@ func TestHasPrefix(t *testing.T) {
 	for ti, tc := range testCases {
 		desc := fmt.Sprintf("test case: %d", ti)
 		t.Run(desc, func(t *testing.T) {
-			t.Log(desc)
 			result := HasPrefix(tc.s, tc.prefix)
 			a.Require(result == tc.ok, fmt.Sprintf("expected %v, but get %v", tc.ok, result))
 		})
@@ -61,7 +60,6 @@ func TestHasSuffix(t *testing.T) {
 	for ti, tc := range testCases {
 		desc := fmt.Sprintf("test case: %d", ti)
 		t.Run(desc, func(t *testing.T) {
-			t.Log(desc)
 			result := HasSuffix(tc.s, tc.suffix)
 			a.Require(result == tc.ok, fmt.Sprintf("expected %v, but get %v", tc.ok, result))
 		})

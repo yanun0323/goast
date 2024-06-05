@@ -96,7 +96,6 @@ type reSlice []uint64`
 	a.NoError(err, "extract other text should be no error")
 
 	otherResult := typeResetter{}.Run(otherNode)
-	otherNode.DebugPrint()
 	a.Nil(otherResult, "reset other node", otherResult.Text())
 
 	otherAssertMap := map[string]kind.Kind{}

@@ -4,7 +4,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/yanun0323/goast/kind"
+	"github.com/yanun0323/goast/scope"
 )
 
 /*
@@ -13,27 +13,27 @@ Scope means the first level declaration of a go file.
 It could be a package/comment/import/var/const/type/func.
 */
 type Scope interface {
-	Kind() ScopeKind
+	Kind() scope.Kind
 	Line() int
 	Print()
 	Node() *Node
 }
 
-func NewScope(line int, kind ScopeKind, node *Node) Scope {
-	return &scope{
+func NewScope(line int, kind scope.Kind, node *Node) Scope {
+	return &scopeStruct{
 		line: line,
 		kind: kind,
 		node: node,
 	}
 }
 
-type scope struct {
+type scopeStruct struct {
 	line int
-	kind ScopeKind
+	kind scope.Kind
 	node *Node
 }
 
-func (d *scope) Line() int {
+func (d *scopeStruct) Line() int {
 	if d == nil {
 		return 0
 	}
@@ -41,19 +41,19 @@ func (d *scope) Line() int {
 	return d.line
 }
 
-func (d *scope) Kind() ScopeKind {
+func (d *scopeStruct) Kind() scope.Kind {
 	if d == nil {
-		return ScopeUnknown
+		return scope.Unknown
 	}
 
 	return d.kind
 }
 
-func (d *scope) Node() *Node {
+func (d *scopeStruct) Node() *Node {
 	return d.node
 }
 
-func (d *scope) Print() {
+func (d *scopeStruct) Print() {
 	if d == nil {
 		return
 	}
@@ -80,81 +80,16 @@ func (d *scope) Print() {
 	}
 }
 
-// ScopeKind
-type ScopeKind string
-
-const (
-	ScopeUnknown      ScopeKind = ""
-	ScopePackage      ScopeKind = "package" // package
-	ScopeComment      ScopeKind = "//"      // comment
-	ScopeInnerComment ScopeKind = "/*"      // inner comment
-	ScopeImport       ScopeKind = "import"  // import
-	ScopeVariable     ScopeKind = "var"     // var
-	ScopeConst        ScopeKind = "const"   // const
-	ScopeType         ScopeKind = "type"    // type
-	ScopeFunc         ScopeKind = "func"    // func
-)
-
-func (k ScopeKind) String() string {
-	switch k {
-	case ScopeUnknown:
-		return "Unknown"
-	case ScopePackage:
-		return "Package"
-	case ScopeComment:
-		return "Comment"
-	case ScopeInnerComment:
-		return "InnerComment"
-	case ScopeImport:
-		return "Import"
-	case ScopeVariable:
-		return "Variable"
-	case ScopeConst:
-		return "Const"
-	case ScopeType:
-		return "Type"
-	case ScopeFunc:
-		return "Func"
-	default:
-		return ""
-	}
-}
-
-func (k ScopeKind) ToKind() kind.Kind {
-	switch k {
-	case ScopeUnknown:
-		return kind.Raw
-	case ScopePackage:
-		return kind.Package
-	case ScopeComment:
-		return kind.Comment
-	case ScopeInnerComment:
-		return kind.Comment
-	case ScopeImport:
-		return kind.Import
-	case ScopeVariable:
-		return kind.Var
-	case ScopeConst:
-		return kind.Const
-	case ScopeType:
-		return kind.Type
-	case ScopeFunc:
-		return kind.Func
-	default:
-		return kind.None
-	}
-}
-
-func NewScopeKind(s string) ScopeKind {
-	kinds := []ScopeKind{
-		ScopePackage,
-		ScopeComment,
-		ScopeInnerComment,
-		ScopeImport,
-		ScopeVariable,
-		ScopeConst,
-		ScopeType,
-		ScopeFunc,
+func newScopeKind(s string) scope.Kind {
+	kinds := []scope.Kind{
+		scope.Package,
+		scope.Comment,
+		scope.InnerComment,
+		scope.Import,
+		scope.Variable,
+		scope.Const,
+		scope.Type,
+		scope.Func,
 	}
 
 	for _, kind := range kinds {
@@ -163,10 +98,10 @@ func NewScopeKind(s string) ScopeKind {
 		}
 	}
 
-	return ScopeUnknown
+	return scope.Unknown
 }
 
-func isScopeKind(s string, k ScopeKind) bool {
+func isScopeKind(s string, k scope.Kind) bool {
 	ks := string(k)
 	if len(s) < len(ks) {
 		return false
