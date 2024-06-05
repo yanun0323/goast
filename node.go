@@ -3,6 +3,8 @@ package goast
 import (
 	"slices"
 	"strings"
+
+	"github.com/yanun0323/goast/helper"
 )
 
 /*
@@ -296,7 +298,7 @@ func (n *Node) Text() string {
 	return n.text
 }
 
-func (n *Node) debugText(limit ...int) string {
+func (n *Node) DebugText(limit ...int) string {
 	if n == nil {
 		return ""
 	}
@@ -308,7 +310,7 @@ func (n *Node) debugText(limit ...int) string {
 	}
 
 	n.IterNext(func(n *Node) bool {
-		buf.WriteString(printTidy(n.Text()))
+		buf.WriteString(helper.TidyText(n.Text()))
 		count--
 		return count != 0
 	})
@@ -327,11 +329,11 @@ func (n *Node) Print() {
 		println("\t", "<nil>")
 	}
 
-	println("\t", n.Line()+1, "....", printTidy(n.Text()), "....", "*Node."+n.Kind().String())
+	println("\t", n.Line()+1, "....", helper.TidyText(n.Text()), "....", "*Node."+n.Kind().String())
 	// println("\t", n.Line()+1, " ....", "*Node."+n.Kind().String(), "....", printTidy(n.Text()))
 }
 
-func (n *Node) PrintIter(limit ...int) {
+func (n *Node) DebugPrint(limit ...int) {
 	var (
 		count    int
 		hasLimit bool

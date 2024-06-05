@@ -3,10 +3,12 @@ package goast
 import (
 	"fmt"
 	"testing"
+
+	"github.com/yanun0323/goast/assert"
 )
 
 func TestTypeResetter(t *testing.T) {
-	a := NewAssert(t)
+	a := assert.New(t)
 
 	interfaceText := `type Student interface {
 		Meow(int32)
@@ -15,24 +17,6 @@ func TestTypeResetter(t *testing.T) {
 		Learn(fn func(string) map[string]string) (func(int)int64, error)
 }`
 
-	structText := `type Student struct {
-Name                                string
-Age /* negative means not born */, Age2	int8
-Relationship                        map[string]string
-FuncRelationship                    map[string]func(int, int8) error
-FuncRelationship2                   map[string]func(n int32, nn int64) error
-FuncRelationship3                   map[string]func(uint, uint8) (uint64, error)
-/* comment */ Fn /* comment */ func( /* comment */
-	/* comment */ context.Context, /* comment */
-	/* comment */ string, /* comment */
-	/* comment */) /* comment */ ( /* comment */
-	/* comment */ int, /* comment */
-	/* comment */ error, /* comment */
-	/* comment */) /* comment */
-}`
-
-	println()
-	println("interface resetter test")
 	interfaceNode, err := extract([]byte(interfaceText))
 	a.NoError(err, "extract interface text should be no error")
 
@@ -53,16 +37,28 @@ FuncRelationship3                   map[string]func(uint, uint8) (uint64, error)
 		}
 		return true
 	})
-	if len(interfaceAssertMap) != 0 {
-		interfaceNode.PrintIter()
-	}
 	a.Equal(len(interfaceAssertMap), 0, "interfaceAssertMap", fmt.Sprintf("%+v", interfaceAssertMap))
+
+	structText := `type Student[T any] struct {
+		Name                                string
+		Age /* negative means not born */, Age2	int8
+		Relationship                        map[string]string
+		FuncRelationship                    map[string]func(int, int8) error
+		FuncRelationship2                   map[string]func(n int32, nn int64) error
+		FuncRelationship3                   map[string]func(uint, uint8) (uint64, error)
+		/* comment */ Fn /* comment */ func( /* comment */
+			/* comment */ context.Context, /* comment */
+			/* comment */ string, /* comment */
+			/* comment */) /* comment */ ( /* comment */
+			/* comment */ int, /* comment */
+			/* comment */ error, /* comment */
+			/* comment */) /* comment */
+		}`
 
 	structNode, err := extract([]byte(structText))
 	a.NoError(err, "extract struct text should be no error")
 
 	structResult := typeResetter{}.Run(structNode)
-	structNode.PrintIter()
 	a.Nil(structResult, "reset struct node", structResult.Text())
 
 	structAssertMap := map[string]Kind{
@@ -82,10 +78,39 @@ FuncRelationship3                   map[string]func(uint, uint8) (uint64, error)
 		return true
 	})
 	a.Equal(len(structAssertMap), 0, "structAssertMap", fmt.Sprintf("%+v", structAssertMap))
+
+	otherText := `type setter  /* comment */ func( /* comment */
+		/* comment */ context.Context, /* comment */
+		/* comment */ string, /* comment */
+		/* comment */) /* comment */ ( /* comment */
+		/* comment */ int, /* comment */
+		/* comment */ error, /* comment */
+		/* comment */) /* comment */
+
+type reMap map[uint8]float64
+
+type reSlice []uint64`
+
+	otherNode, err := extract([]byte(otherText))
+	a.NoError(err, "extract other text should be no error")
+
+	otherResult := typeResetter{}.Run(otherNode)
+	otherNode.DebugPrint()
+	a.Nil(otherResult, "reset other node", otherResult.Text())
+
+	otherAssertMap := map[string]Kind{}
+	otherNode.IterNext(func(n *Node) bool {
+		if expected, ok := otherAssertMap[n.Text()]; ok {
+			a.Equal(n.Kind(), expected, n.Text())
+			delete(otherAssertMap, n.Text())
+		}
+		return true
+	})
+	a.Equal(len(otherAssertMap), 0, "otherAssertMap", fmt.Sprintf("%+v", otherAssertMap))
 }
 
 func TestStructResetterGetNameCount(t *testing.T) {
-	a := NewAssert(t)
+	a := assert.New(t)
 
 	s1 := "\t\tRepository\n"
 	s1n, err := extract([]byte(s1))

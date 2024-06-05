@@ -2,10 +2,12 @@ package goast
 
 import (
 	"testing"
+
+	"github.com/yanun0323/goast/assert"
 )
 
 func TestParse(t *testing.T) {
-	a := NewAssert(t)
+	a := assert.New(t)
 	_ = a
 	// return
 	ff, err := ParseAst("sample_test.go")

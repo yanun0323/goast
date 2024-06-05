@@ -3,6 +3,8 @@ package goast
 import (
 	"errors"
 	"strings"
+
+	"github.com/yanun0323/goast/helper"
 )
 
 var ErrOutOfRange = errors.New("out of range")
@@ -100,7 +102,7 @@ func (de deeperExtract) PrefixFit(s []byte) (*extractor, bool) {
 	}
 
 	for k, v := range de {
-		if hasPrefix(s, k) {
+		if helper.HasPrefix(s, k) {
 			return v, true
 		}
 	}
@@ -188,14 +190,14 @@ func (e *extractor) Run(text []byte, buf *strings.Builder, i *int, line *int) (*
 		}
 
 		trailing := text[:*i+1]
-		if len(e.SkipReturnKeyword) != 0 && hasSuffix(trailing, e.SkipReturnKeyword) {
+		if len(e.SkipReturnKeyword) != 0 && helper.HasSuffix(trailing, e.SkipReturnKeyword) {
 			// skip return
 			buf.WriteByte(char)
 			lineStep()
 			continue
 		}
 
-		if len(e.ReturnKeyword) != 0 && hasSuffix(trailing, e.ReturnKeyword) {
+		if len(e.ReturnKeyword) != 0 && helper.HasSuffix(trailing, e.ReturnKeyword) {
 			// inside ) } */ " ` \n
 			if e.IncludeClose { // */ " `
 				buf.WriteByte(char)

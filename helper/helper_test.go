@@ -1,19 +1,21 @@
-package goast
+package helper
 
 import (
 	"fmt"
 	"testing"
+
+	"github.com/yanun0323/goast/assert"
 )
 
 func TestGolang(t *testing.T) {
-	a := NewAssert(t)
+	a := assert.New(t)
 
 	s := "0123456789"
 	a.Require(string(s[2:5]) == "234", string(s[2:5]))
 }
 
 func TestHasPrefix(t *testing.T) {
-	a := NewAssert(t)
+	a := assert.New(t)
 
 	testCases := []struct {
 		s      []byte
@@ -33,14 +35,14 @@ func TestHasPrefix(t *testing.T) {
 		desc := fmt.Sprintf("test case: %d", ti)
 		t.Run(desc, func(t *testing.T) {
 			t.Log(desc)
-			result := hasPrefix(tc.s, tc.prefix)
+			result := HasPrefix(tc.s, tc.prefix)
 			a.Require(result == tc.ok, fmt.Sprintf("expected %v, but get %v", tc.ok, result))
 		})
 	}
 }
 
 func TestHasSuffix(t *testing.T) {
-	a := NewAssert(t)
+	a := assert.New(t)
 
 	testCases := []struct {
 		s      []byte
@@ -60,15 +62,15 @@ func TestHasSuffix(t *testing.T) {
 		desc := fmt.Sprintf("test case: %d", ti)
 		t.Run(desc, func(t *testing.T) {
 			t.Log(desc)
-			result := hasSuffix(tc.s, tc.suffix)
+			result := HasSuffix(tc.s, tc.suffix)
 			a.Require(result == tc.ok, fmt.Sprintf("expected %v, but get %v", tc.ok, result))
 		})
 	}
 }
 
 func TestPrintTidy(t *testing.T) {
-	a := NewAssert(t)
+	a := assert.New(t)
 
 	s := "\n \n \n\t\r"
-	a.Equal(printTidy(s), "\\n·\\n·\\n -> ·")
+	a.Equal(TidyText(s), "\\n·\\n·\\n -> ·")
 }

@@ -1,9 +1,13 @@
 package goast
 
-import "testing"
+import (
+	"testing"
+
+	"github.com/yanun0323/goast/assert"
+)
 
 func TestTrie(t *testing.T) {
-	a := NewAssert(t)
+	a := assert.New(t)
 
 	root := newTrie(map[string]*Kind{})
 	basic := KindBasic
@@ -37,7 +41,7 @@ func TestTrie(t *testing.T) {
 }
 
 func TestTrieComment(t *testing.T) {
-	a := NewAssert(t)
+	a := assert.New(t)
 
 	root := newTrie(map[string]trie[bool]{
 		"//": newTrie(map[string]bool{"\n": true}),
@@ -57,7 +61,7 @@ func TestTrieComment(t *testing.T) {
 }
 
 func TestTrieFindReversely(t *testing.T) {
-	a := NewAssert(t)
+	a := assert.New(t)
 
 	tr := newTrie(newCharset("123"))
 	_, ok := tr.FindText("123")

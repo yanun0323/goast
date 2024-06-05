@@ -1,5 +1,7 @@
 package goast
 
+import "github.com/yanun0323/goast/helper"
+
 // parenthesisResetter starts with '('
 type parenthesisResetter struct {
 	skip       bool
@@ -50,7 +52,6 @@ func (r parenthesisResetter) Run(head *Node, hooks ...func(*Node)) *Node {
 
 // handleParenthesisParam starts with next of '(' and ','
 func (r parenthesisResetter) handleParenthesisParam(head *Node, isReceiver bool, hooks ...func(*Node)) *Node {
-	println("handleParenthesisParam:", head.debugText(3))
 	var (
 		skipAll          bool
 		jumpTo           *Node
@@ -98,7 +99,7 @@ func (r parenthesisResetter) handleParenthesisParam(head *Node, isReceiver bool,
 			return false
 		case KindSquareBracketLeft: // ignore including generic
 			jumpTo = squareBracketResetter{}.Run(n, append(hooks, func(nn *Node) {
-				buf = appendUnrepeatable(buf, nn)
+				buf = helper.AppendUnrepeatable(buf, nn)
 			})...).Next()
 			skipAll = jumpTo == nil
 			return true
@@ -117,7 +118,7 @@ func (r parenthesisResetter) handleParenthesisParam(head *Node, isReceiver bool,
 			if hasSpaceAfterRaw {
 				hasName = true
 			}
-			buf = appendUnrepeatable(buf, n)
+			buf = helper.AppendUnrepeatable(buf, n)
 			return true
 		}
 	})

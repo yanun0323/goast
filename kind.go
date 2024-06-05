@@ -1,5 +1,7 @@
 package goast
 
+import "github.com/yanun0323/goast/helper"
+
 type Kind [2]string
 
 var (
@@ -135,7 +137,7 @@ func NewKind(s string) Kind {
 		return KindSeparator
 	}
 
-	if buf := []byte(s); hasPrefix(buf, "\"") || hasPrefix(buf, "`") {
+	if buf := []byte(s); helper.HasPrefix(buf, "\"") || helper.HasPrefix(buf, "`") {
 		return KindString
 	}
 

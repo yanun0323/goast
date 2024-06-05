@@ -3,10 +3,12 @@ package goast
 import (
 	"fmt"
 	"testing"
+
+	"github.com/yanun0323/goast/assert"
 )
 
 func TestExtract(t *testing.T) {
-	a := NewAssert(t)
+	a := assert.New(t)
 
 	s := `
 func Print(msg string, d decimal.Decimal) {

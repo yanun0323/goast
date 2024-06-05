@@ -3,10 +3,12 @@ package goast
 import (
 	"fmt"
 	"testing"
+
+	"github.com/yanun0323/goast/assert"
 )
 
 func TestCommonResetter(t *testing.T) {
-	a := NewAssert(t)
+	a := assert.New(t)
 	text := `func Hello(ctx context.Context, m map[string]string, f1 func(int) error, f2 func(num int8) (int32, error)) error {
 	return (int, nil)
 }`

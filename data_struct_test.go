@@ -1,9 +1,13 @@
 package goast
 
-import "testing"
+import (
+	"testing"
+
+	"github.com/yanun0323/goast/assert"
+)
 
 func TestSet(t *testing.T) {
-	a := NewAssert(t)
+	a := assert.New(t)
 
 	var s set[int]
 	a.Require(s.Contain(5) == false, "set contain 5")

@@ -1,6 +1,10 @@
 package goast
 
-import "path/filepath"
+import (
+	"path/filepath"
+
+	"github.com/yanun0323/goast/helper"
+)
 
 type Ast interface {
 	Package() string
@@ -12,7 +16,7 @@ type Ast interface {
 }
 
 func ParseAst(file string) (Ast, error) {
-	data, err := readFile(file)
+	data, err := helper.ReadFile(file)
 	if err != nil {
 		return nil, err
 	}

@@ -1,5 +1,7 @@
 package goast
 
+import "github.com/yanun0323/goast/helper"
+
 // funcResetter includes:
 //
 //   - function with name and '{}' : func Hello() (string, error) {}
@@ -205,7 +207,6 @@ func (r funcResetter) handleParameterFunc(head *Node, hooks ...func(*Node)) *Nod
 
 // handleSingleReturnType starts with ' '
 func (r funcResetter) handleSingleReturnType(head *Node, hooks ...func(*Node)) *Node {
-	println("handleSingleReturnType:", head.debugText(4))
 	if head.Kind() != KindSpace {
 		handleHook(head, hooks...)
 		return head.Next()
@@ -214,16 +215,12 @@ func (r funcResetter) handleSingleReturnType(head *Node, hooks ...func(*Node)) *
 	head = head.Next() // skip first space
 
 	found := head.findNext([]Kind{KindComment}, findNodeOption{TargetReverse: true}, hooks...)
-	println("\t", "found:", found.debugText(), found.Kind().String())
 	switch found.Kind() {
 	case KindParenthesisLeft:
-		println("\t", "KindParenthesisLeft")
 		return parenthesisResetter{}.Run(head, hooks...)
 	case KindFunc:
-		println("\t", "KindFunc")
 		return r.handleParameterFunc(head, hooks...)
 	}
-	println("\t", "Others")
 
 	var (
 		buf []*Node
@@ -246,7 +243,7 @@ func (r funcResetter) handleSingleReturnType(head *Node, hooks ...func(*Node)) *
 		case KindComment:
 			return true
 		default:
-			buf = appendUnrepeatable(buf, n)
+			buf = helper.AppendUnrepeatable(buf, n)
 			return true
 		}
 	})

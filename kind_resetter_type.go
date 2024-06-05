@@ -63,8 +63,16 @@ func (r typeResetter) Run(head *Node, hooks ...func(*Node)) *Node {
 			jumpTo = structResetter{}.Run(n, hooks...)
 			skipAll = jumpTo == nil
 			return true
+		case KindFunc:
+			jumpTo = funcResetter{isFuncKeywordLeading: true}.Run(n, hooks...)
+			skipAll = jumpTo == nil
+			return true
 		case KindRaw:
-			jumpTo = r.otherResetter(n, hooks...)
+			jumpTo = paramResetter{resetKind: KindParamType, returnKinds: []Kind{KindNewLine}}.Run(n, hooks...)
+			skipAll = jumpTo == nil
+			return true
+		case KindSquareBracketLeft:
+			jumpTo = squareBracketResetter{skip: true}.Run(n, hooks...)
 			skipAll = jumpTo == nil
 			return true
 		default:
@@ -248,35 +256,4 @@ func (r structResetter) getRowNameCount(head *Node) int {
 	})
 
 	return nameCount
-}
-
-// otherResetter
-//
-// return key kind: '\n'
-func (r typeResetter) otherResetter(head *Node, hooks ...func(*Node)) *Node {
-	var (
-		buf []*Node
-	)
-
-	defer func() {
-		if len(buf) != 0 {
-			n := buf[0]
-			next := buf[len(buf)-1].Next()
-			n = n.CombineNext(KindTypeAliasType, buf[1:]...)
-			n.ReplaceNext(next)
-		}
-	}()
-
-	return head.IterNext(func(n *Node) bool {
-		handleHook(n, hooks...)
-		switch n.Kind() {
-		case KindNewLine: // return kind
-			return false
-		case KindComment:
-			return true
-		default:
-			buf = appendUnrepeatable(buf, n)
-			return true
-		}
-	})
 }

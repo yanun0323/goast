@@ -1,4 +1,4 @@
-package goast
+package assert
 
 import (
 	"os"
@@ -24,6 +24,10 @@ func New(t *testing.T) Assert {
 		t:     t,
 		Debug: d,
 	}
+}
+
+func (a Assert) T() *testing.T {
+	return a.t
 }
 
 func (a Assert) Nil(value any, msg ...string) {

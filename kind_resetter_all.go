@@ -1,5 +1,7 @@
 package goast
 
+import "github.com/yanun0323/goast/helper"
+
 func kindReset(n *Node) *Node {
 	return generalResetter().Run(n)
 }
@@ -89,23 +91,6 @@ func (r genericResetter) Run(head *Node, _ ...func(*Node)) *Node {
 	})
 }
 
-type scopeResetter struct{}
-
-func (r scopeResetter) Reset(s Scope) {
-	switch s.Kind() {
-	case ScopePackage:
-	case ScopeComment:
-	case ScopeInnerComment:
-	case ScopeImport:
-	case ScopeVariable:
-	case ScopeConst:
-	// case ScopeType:
-	// case ScopeFunc:
-	default:
-
-	}
-}
-
 type paramResetter struct {
 	skip        bool
 	resetKind   Kind
@@ -155,7 +140,7 @@ func (r paramResetter) Run(head *Node, hooks ...func(*Node)) *Node {
 		hooksCopy := make([]func(*Node), len(hooks))
 		copy(hooksCopy, hooks)
 		appendedHooks := append(hooksCopy, func(nn *Node) {
-			buf = appendUnrepeatable(buf, nn)
+			buf = helper.AppendUnrepeatable(buf, nn)
 		})
 
 		switch n.Kind() {
@@ -179,7 +164,7 @@ func (r paramResetter) Run(head *Node, hooks ...func(*Node)) *Node {
 			return true
 		default:
 			if !r.skip {
-				buf = appendUnrepeatable(buf, n)
+				buf = helper.AppendUnrepeatable(buf, n)
 			}
 
 			return true
