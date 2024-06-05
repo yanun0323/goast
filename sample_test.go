@@ -75,6 +75,12 @@ func /* comment */ ( /* comment */ ss /* comment */ *SampleStruct /* comment */)
 	return nil
 }
 
+type Generic[T any, V comparable] struct{}
+
+func /* cm */ ( /* cm */ g /* cm */ *Generic[ /* cm */ T /* cm */ /* cm */, V /* cm */] /* cm */) /* cm */ Run /* cm */ ( /* cm */ obj /* cm */ T /* cm */ /* cm */, c /* cm */ V /* cm */) /* cm */ error /* cm */ {
+	return nil
+}
+
 /*
 SampleStruct.Run
 

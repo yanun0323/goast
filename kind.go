@@ -37,13 +37,15 @@ var (
 	KindPackage   = Kind{"package", "Package"}
 
 	/* resetter set */
-	KindFuncName      = Kind{"", "FuncName"}
-	KindTypeName      = Kind{"", "TypeName"}
-	KindTypeAliasType = Kind{"", "TypeAliasType"}
-	KindParamName     = Kind{"", "ParamName"}
-	KindParamType     = Kind{"", "ParamType"}
-	KindString        = Kind{"", "String"}
-	KindMethod        = Kind{"", "Method"}
+	KindFuncName           = Kind{"", "FuncName"}
+	KindTypeName           = Kind{"", "TypeName"}
+	KindTypeAliasType      = Kind{"", "TypeAliasType"}
+	KindParamName          = Kind{"", "ParamName"}
+	KindParamType          = Kind{"", "ParamType"}
+	KindMethodReceiverName = Kind{"", "MethodReceiverName"}
+	KindMethodReceiverType = Kind{"", "MethodReceiverType"}
+	KindString             = Kind{"", "String"}
+	KindMethod             = Kind{"", "Method"}
 )
 
 func (k *Kind) PointerString() string {
@@ -56,6 +58,25 @@ func (k *Kind) PointerString() string {
 
 func (k Kind) String() string {
 	return string(k[1])
+}
+
+func (k Kind) GetClose() (Kind, bool) {
+	switch k {
+	case KindParenthesisLeft:
+		return KindParenthesisRight, true
+	case KindCurlyBracketLeft:
+		return KindCurlyBracketRight, true
+	case KindSquareBracketLeft:
+		return KindSquareBracketRight, true
+	case KindParenthesisRight:
+		return KindParenthesisLeft, true
+	case KindCurlyBracketRight:
+		return KindCurlyBracketLeft, true
+	case KindSquareBracketRight:
+		return KindSquareBracketLeft, true
+	default:
+		return KindNone, false
+	}
 }
 
 func NewKind(s string) Kind {

@@ -7,19 +7,16 @@ import (
 
 func TestCommonResetter(t *testing.T) {
 	a := NewAssert(t)
-	text := `package main 
-
-import (
-	"context"
-)
-
-func Hello(ctx context.Context, m map[string]string, f1 func(int) error, f2 func(num int8) (int32, error)) (string, error) {
+	text := `func Hello(ctx context.Context, m map[string]string, f1 func(int) error, f2 func(num int8) (int32, error)) error {
 	return (int, nil)
 }`
+
+	println("Extract:")
 	head, err := extract([]byte(text))
 	a.NoError(err, fmt.Sprintf("extract text, err: %s", err))
 
 	tail := kindReset(head)
+	head.PrintAllNext()
 	_ = head.IterNext(func(n *Node) bool {
 		switch n.Text() {
 		case "Hello":
@@ -67,7 +64,7 @@ FuncRelationship3					map[string]func(uint, uint8) (uint64, error)
 	a.NoError(err, "extract interface text should be no error")
 
 	interfaceResult := typeResetter{}.Run(interfaceNode)
-	interfaceNode.PrintAllNext()
+	// interfaceNode.PrintAllNext()
 	a.Nil(interfaceResult, "reset interface node", interfaceResult.Text())
 
 	containByteSlice := false

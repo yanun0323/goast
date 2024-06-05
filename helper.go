@@ -55,12 +55,10 @@ func hasSuffix(s []byte, suffix string) bool {
 	return true
 }
 
-func printTidy(s string, space ...bool) string {
+func printTidy(s string) string {
 	s = strings.ReplaceAll(s, "\n", "\\n")
 	s = strings.ReplaceAll(s, "\t", "\\t")
 	s = strings.ReplaceAll(s, "\r", "\\r")
-	if len(space) != 0 && space[0] {
-		s = strings.ReplaceAll(s, " ", "\\s")
-	}
+	s = strings.ReplaceAll(s, " ", "\\s")
 	return s
 }

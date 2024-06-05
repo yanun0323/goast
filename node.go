@@ -195,6 +195,8 @@ func (n *Node) RemoveNext() *Node {
 //
 // e.g. (nn3 - nn2 - nn1 - n)
 func (n *Node) CombinePrev(k Kind, nns ...*Node) *Node {
+	n.SetKind(k)
+
 	if len(nns) == 0 {
 		return n
 	}
@@ -215,7 +217,6 @@ func (n *Node) CombinePrev(k Kind, nns ...*Node) *Node {
 	slices.Reverse(buf)
 
 	n.text = strings.Join(buf, "")
-	n.kind = k
 
 	return n
 }
@@ -225,6 +226,8 @@ func (n *Node) CombinePrev(k Kind, nns ...*Node) *Node {
 //
 // e.g. (n - nn1 - nn2 - nn3)
 func (n *Node) CombineNext(k Kind, nns ...*Node) *Node {
+	n.SetKind(k)
+
 	if len(nns) == 0 {
 		return n
 	}
@@ -243,7 +246,6 @@ func (n *Node) CombineNext(k Kind, nns ...*Node) *Node {
 	}
 
 	n.text = strings.Join(buf, "")
-	n.kind = k
 
 	return n
 }
@@ -267,7 +269,7 @@ func (n *Node) Line() int {
 
 func (n *Node) Kind() Kind {
 	if n == nil {
-		return KindRaw
+		return KindNone
 	}
 
 	return n.kind
@@ -285,6 +287,12 @@ func (n *Node) Text() string {
 	}
 	return n.text
 }
+func (n *Node) TidiedText() string {
+	if n == nil {
+		return ""
+	}
+	return printTidy(n.text)
+}
 
 func (n *Node) SetText(text string) {
 	if n == nil {
@@ -298,7 +306,8 @@ func (n *Node) Print() {
 		println("\t", "<nil>")
 	}
 
-	println("\t", n.Line()+1, " ....", "*Node."+n.Kind().String(), "....", printTidy(n.Text()))
+	println("\t", n.Line()+1, "....", printTidy(n.Text()), " ....", "*Node."+n.Kind().String())
+	// println("\t", n.Line()+1, " ....", "*Node."+n.Kind().String(), "....", printTidy(n.Text()))
 }
 
 func (n *Node) PrintAllNext() {
@@ -332,4 +341,117 @@ func (n *Node) setNext(nn *Node) {
 	}
 
 	n.next = nn
+}
+
+// skipNestNext helper
+func (n *Node) skipNestNext(nestLeft, nestRight Kind, hook ...func(*Node)) *Node {
+	count := 1
+	if n.Kind() == nestLeft {
+		if len(hook) != 0 {
+			for _, h := range hook {
+				h(n)
+			}
+		}
+		n = n.Next() // skip first nestLeft
+	}
+
+	return n.IterNext(func(n *Node) bool {
+		if len(hook) != 0 {
+			for _, h := range hook {
+				h(n)
+			}
+		}
+
+		switch n.Kind() {
+		case nestLeft:
+			count++
+			return true
+		case nestRight:
+			count--
+			return count != 0
+		default:
+			return true
+		}
+	})
+}
+
+// findNext helper
+func (n *Node) findNext(
+	target set[Kind],
+	opt findNodeOption,
+	// filters ...func(*Node, findNodeOption) bool,
+) *Node {
+	var (
+		parenthesisLeftCount   int
+		curlyBracketLeftCount  int
+		squareBracketLeftCount int
+	)
+
+	return n.IterNext(func(n *Node) bool {
+		switch n.Kind() {
+		case KindParenthesisLeft:
+			parenthesisLeftCount++
+		case KindCurlyBracketLeft:
+			curlyBracketLeftCount++
+		case KindSquareBracketLeft:
+			squareBracketLeftCount++
+		case KindParenthesisRight:
+			parenthesisLeftCount--
+		case KindCurlyBracketRight:
+			curlyBracketLeftCount--
+		case KindSquareBracketRight:
+			squareBracketLeftCount--
+		}
+
+		if opt.IsInsideParenthesis && parenthesisLeftCount == 0 {
+			return true
+		}
+
+		if opt.IsInsideCurlyBracket && curlyBracketLeftCount == 0 {
+			return true
+		}
+
+		if opt.IsInsideSquareBracket && squareBracketLeftCount == 0 {
+			return true
+		}
+
+		if opt.IsOutsideParenthesis && parenthesisLeftCount != 0 {
+			return true
+		}
+
+		if opt.IsOutsideCurlyBracket && curlyBracketLeftCount != 0 {
+			return true
+		}
+
+		if opt.IsOutsideSquareBracket && squareBracketLeftCount != 0 {
+			return true
+		}
+
+		if target.Contain(n.Kind()) {
+			return opt.TargetReverse
+		}
+
+		// for _, filter := range filters {
+		// 	return filter(n, findNodeOption{
+		// 		IsInsideParenthesis:    parenthesisLeftCount != 0,
+		// 		IsInsideCurlyBracket:   curlyBracketLeftCount != 0,
+		// 		IsInsideSquareBracket:  squareBracketLeftCount != 0,
+		// 		IsOutsideParenthesis:   parenthesisLeftCount == 0,
+		// 		IsOutsideCurlyBracket:  curlyBracketLeftCount == 0,
+		// 		IsOutsideSquareBracket: squareBracketLeftCount == 0,
+		// 	})
+		// }
+
+		return true
+	})
+}
+
+type findNodeOption struct {
+	TargetReverse          bool
+	IsInsideParenthesis    bool
+	IsInsideCurlyBracket   bool
+	IsInsideSquareBracket  bool
+	IsOutsideParenthesis   bool
+	IsOutsideCurlyBracket  bool
+	IsOutsideSquareBracket bool
 }

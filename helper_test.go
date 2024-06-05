@@ -70,6 +70,5 @@ func TestPrintTidy(t *testing.T) {
 	a := NewAssert(t)
 
 	s := "\n \n \n\t\r"
-	a.Require(printTidy(s) == "\\n \\n \\n\\t\\r")
-	a.Require(printTidy(s, true) == "\\n\\s\\n\\s\\n\\t\\r")
+	a.Equal(printTidy(s), "\\n\\s\\n\\s\\n\\t\\r")
 }
