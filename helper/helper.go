@@ -1,13 +1,19 @@
 package helper
 
 import (
+	"fmt"
 	"go/format"
 	"io"
 	"os"
+	"path/filepath"
 	"strings"
 )
 
 func ReadFile(file string) ([]byte, error) {
+	if !HasSuffix([]byte(file), ".go") {
+		file = file + ".go"
+	}
+
 	f, err := os.Open(file)
 	if err != nil {
 		return nil, err
@@ -25,6 +31,34 @@ func ReadFile(file string) ([]byte, error) {
 	}
 
 	return formatted, nil
+}
+
+func SaveFile(file string, data []byte) error {
+	if !HasSuffix([]byte(file), ".go") {
+		file = file + ".go"
+	}
+
+	formatted, err := format.Source(data)
+	if err != nil {
+		return fmt.Errorf("format ast data, err: %w", err)
+	}
+
+	dir := filepath.Dir(file)
+	if err := os.MkdirAll(dir, 0666); err != nil {
+		return fmt.Errorf("mkdir %s, err: %w", dir, err)
+	}
+
+	f, err := os.Create(file)
+	if err != nil {
+		return fmt.Errorf("create file %s, err: %w", file, err)
+	}
+	defer f.Close()
+
+	if _, err := f.Write(formatted); err != nil {
+		return fmt.Errorf("write file %s, err: %w", file, err)
+	}
+
+	return nil
 }
 
 func HasPrefix(s []byte, prefix string) bool {

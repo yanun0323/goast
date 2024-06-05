@@ -17,6 +17,7 @@ type Scope interface {
 	Line() int
 	Print()
 	Node() *Node
+	Text() string
 }
 
 func NewScope(line int, kind scope.Kind, node *Node) Scope {
@@ -78,6 +79,17 @@ func (d *scopeStruct) Print() {
 	for _, l := range lines {
 		println("\t", l+1, "....", strings.Join(buf[l], ""))
 	}
+}
+
+func (d *scopeStruct) Text() string {
+	buf := strings.Builder{}
+
+	d.Node().IterNext(func(n *Node) bool {
+		buf.WriteString(n.Text())
+		return true
+	})
+
+	return buf.String()
 }
 
 func newScopeKind(s string) scope.Kind {

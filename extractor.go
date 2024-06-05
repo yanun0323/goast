@@ -1,15 +1,12 @@
 package goast
 
 import (
-	"errors"
 	"strings"
 
 	"github.com/yanun0323/goast/charset"
 	"github.com/yanun0323/goast/helper"
 	"github.com/yanun0323/goast/kind"
 )
-
-var ErrOutOfRange = errors.New("out of range")
 
 // extract parses file text content into nodes.
 func extract(text []byte) (*Node, error) {

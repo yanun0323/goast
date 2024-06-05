@@ -1,20 +1,29 @@
 package goast
 
 import (
+	"bytes"
+	"errors"
 	"path/filepath"
+	"strings"
 
 	"github.com/yanun0323/goast/helper"
 	"github.com/yanun0323/goast/kind"
 	"github.com/yanun0323/goast/scope"
 )
 
+var ErrNoPackage = errors.New("out of range")
+
 type Ast interface {
-	Package() string
+	Package() (string, error)
 	File() string
 	Dir() string
 	Name() string
 	Ext() string
 	Scope() []Scope
+	IterScope(func(Scope) bool)
+	SetScope([]Scope) Ast
+	String() string
+	Save(string) error
 }
 
 func ParseAst(file string) (Ast, error) {
@@ -28,7 +37,7 @@ func ParseAst(file string) (Ast, error) {
 		return nil, err
 	}
 
-	_ = generalResetter().Run(node)
+	generalResetter().Run(node)
 
 	scs := []Scope{}
 
@@ -70,8 +79,11 @@ func ParseAst(file string) (Ast, error) {
 
 	tryAppendScope()
 
+	if _, err := findPackageName(scs); err != nil {
+		return nil, err
+	}
+
 	result := &ast{
-		pkg:   findPackageName(scs),
 		file:  file,
 		dir:   filepath.Dir(file),
 		name:  filepath.Base(file),
@@ -82,7 +94,7 @@ func ParseAst(file string) (Ast, error) {
 	return result, nil
 }
 
-func findPackageName(scs []Scope) string {
+func findPackageName(scs []Scope) (string, error) {
 	var packageScope Scope
 	for _, sc := range scs {
 		if sc.Kind() == scope.Package {
@@ -92,7 +104,7 @@ func findPackageName(scs []Scope) string {
 	}
 
 	if packageScope == nil {
-		return ""
+		return "", ErrNoPackage
 	}
 
 	packageKeywordAppeared := false
@@ -108,11 +120,10 @@ func findPackageName(scs []Scope) string {
 		return true
 	})
 
-	return result.Text()
+	return result.Text(), nil
 }
 
 type ast struct {
-	pkg   string
 	file  string
 	dir   string
 	name  string
@@ -120,12 +131,18 @@ type ast struct {
 	scope []Scope
 }
 
-func (f *ast) Package() string {
-	if f == nil {
-		return ""
+func NewAst(scope []Scope) (Ast, error) {
+	if _, err := findPackageName(scope); err != nil {
+		return nil, err
 	}
 
-	return f.pkg
+	return &ast{
+		scope: scope,
+	}, nil
+}
+
+func (f *ast) Package() (string, error) {
+	return findPackageName(f.scope)
 }
 
 func (f *ast) File() string {
@@ -166,4 +183,42 @@ func (f *ast) Scope() []Scope {
 	}
 
 	return f.scope
+}
+
+func (f *ast) IterScope(fn func(Scope) bool) {
+	for _, sc := range f.scope {
+		if !fn(sc) {
+			return
+		}
+	}
+}
+
+func (f *ast) SetScope(scope []Scope) Ast {
+	return &ast{
+		file:  f.file,
+		dir:   f.dir,
+		name:  f.name,
+		ext:   f.ext,
+		scope: scope,
+	}
+}
+
+func (f *ast) String() string {
+	buf := strings.Builder{}
+
+	for _, sc := range f.Scope() {
+		buf.WriteString(sc.Text())
+	}
+
+	return buf.String()
+}
+
+func (f *ast) Save(file string) error {
+	buf := bytes.Buffer{}
+
+	for _, sc := range f.Scope() {
+		buf.WriteString(sc.Text())
+	}
+
+	return helper.SaveFile(file, buf.Bytes())
 }

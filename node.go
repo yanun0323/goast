@@ -32,13 +32,10 @@ type Node struct {
 
 func (n *Node) loop(iter func(*Node) *Node, fn func(*Node) bool) *Node {
 	for nn := n; nn != nil; nn = iter(nn) {
-		if fn(nn) {
-			continue
+		if !fn(nn) {
+			return nn
 		}
-
-		return nn
 	}
-
 	return nil
 }
 

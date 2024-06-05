@@ -11,6 +11,7 @@ var (
 	None      Kind
 	Raw       = Kind{"", "Raw"}
 	Comment   = Kind{"", "Comment"}
+	Number    = Kind{"", "Number"}
 	Symbol    = Kind{"", "Symbol"}
 	Basic     = Kind{"", "BasicType"}
 	Separator = Kind{"", "Separator"}
@@ -134,6 +135,10 @@ func New(s string) Kind {
 		return Interface
 	case Package[0]:
 		return Package
+	}
+
+	if len(s) == 1 && charset.NumberCharset.Contain(s[0]) {
+		return Number
 	}
 
 	if len(s) == 1 && charset.SeparatorCharset.Contain(s[0]) {
