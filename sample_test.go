@@ -56,6 +56,13 @@ type /* comment */ SampleInterface /* comment */ interface /* comment */ { /* co
 var _ SampleInterface = (*SampleStruct)(nil)
 
 type /* comment */ SampleStruct /* comment */ struct /* comment */ { /* comment */
+	/* comment */ Fn /* comment */ func( /* comment */
+		/* comment */ int, /* comment */
+		/* comment */ string, /* comment */
+		/* comment */) /* comment */ ( /* comment */
+		/* comment */ int, /* comment */
+		/* comment */ error, /* comment */
+		/* comment */) /* comment */
 }
 
 // SampleStruct.Run

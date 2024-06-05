@@ -112,13 +112,10 @@ func (r typeResetter) interfaceResetter(head *Node) *Node {
 		case KindTab, KindComment, KindNewLine, KindSpace, KindCurlyBracketLeft:
 			return true
 		default:
-			println("typeResetter.funcResetter.Start:", n.TidiedText(), n.Kind().String())
 			jumpTo = funcResetter{
 				isInterfaceDefinition: true,
 			}.Run(n)
 			skipAll = jumpTo == nil
-			println("typeResetter.funcResetter.jumpTo:", jumpTo.TidiedText(), jumpTo.kind.String())
-			println()
 			return true
 		}
 	})
@@ -149,14 +146,12 @@ func (r typeResetter) otherResetter(head *Node) *Node {
 	)
 
 	defer func() {
-		if len(buf) == 0 {
-			return
+		if len(buf) != 0 {
+			n := buf[0]
+			next := buf[len(buf)-1].Next()
+			n = n.CombineNext(KindTypeAliasType, buf[1:]...)
+			n.ReplaceNext(next)
 		}
-
-		n := buf[0]
-		next := buf[len(buf)-1].Next()
-		n = n.CombineNext(KindTypeAliasType, buf[1:]...)
-		n.ReplaceNext(next)
 	}()
 
 	return head.IterNext(func(n *Node) bool {

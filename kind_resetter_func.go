@@ -23,7 +23,7 @@ type funcResetter struct {
 	isInterfaceDefinition bool
 }
 
-func (r funcResetter) Run(head *Node) *Node {
+func (r funcResetter) Run(head *Node, _ ...func(*Node)) *Node {
 	if r.isParameter {
 		return r.handleParameterFunc(head)
 	}
@@ -78,21 +78,15 @@ func (r funcResetter) Run(head *Node) *Node {
 			// keep going when find func/method
 		}
 
-		if isMethod {
-			println("\t", "funcResetter.handleParenthesisParam.Start:", n.TidiedText(), n.Kind().String())
+		if isMethod { // '('
 			isMethod = false
-			jumpTo = r.handleParenthesisParam(head, true)
+			jumpTo = parenthesisResetter{isReceiver: true}.Run(n)
 			skipAll = jumpTo == nil
-			println("\t", "funcResetter.handleParenthesisParam.JumpTo:", jumpTo.TidiedText(), jumpTo.Kind().String())
-			println()
 			return true
 		}
 
-		println("\t", "funcResetter.handleGeneralFunc.Start:", n.TidiedText(), n.Kind().String())
 		jumpTo = r.handleGeneralFunc(head)
 		skipAll = jumpTo == nil
-		println("\t", "funcResetter.handleGeneralFunc.JumpTo:", jumpTo.TidiedText(), jumpTo.Kind().String())
-		println()
 		return true
 	})
 }
@@ -146,36 +140,24 @@ func (r funcResetter) handleGeneralFunc(head *Node, returnKinds ...Kind) *Node {
 			return true
 		case KindSpace:
 			if isFuncParamHandled {
-				println("\t", "handleGeneralFunc.handleSingleReturnType.Start:", n.TidiedText(), n.Kind().String())
 				jumpTo = r.handleSingleReturnType(n)
 				skipAll = jumpTo == nil
-				println("\t", "handleGeneralFunc.handleSingleReturnType.JumpTo:", jumpTo.TidiedText(), jumpTo.Kind().String())
-				println()
 				return true
 			}
 			return true
 		case KindParenthesisLeft:
-			println("\t", "handleGeneralFunc.handleParenthesis.Start:", n.TidiedText(), n.Kind().String())
 			isFuncParamHandled = true
-			jumpTo = r.handleParenthesis(n)
+			jumpTo = parenthesisResetter{}.Run(n)
 			skipAll = jumpTo == nil
-			println("\t", "handleGeneralFunc.handleParenthesis.JumpTo:", jumpTo.TidiedText(), jumpTo.Kind().String())
-			println()
 			return true
 		case KindCurlyBracketLeft:
-			println("\t", "handleGeneralFunc.handleCurlyBracket.Start:", n.TidiedText(), n.Kind().String())
-			jumpTo = r.handleCurlyBracket(n)
+			jumpTo = curlyBracketResetter{}.Run(n)
 			skipAll = jumpTo == nil
-			println("\t", "handleGeneralFunc.handleCurlyBracket.JumpTo:", jumpTo.TidiedText(), jumpTo.Kind().String())
-			println()
 			return true
 		case KindSquareBracketLeft:
-			println("\t", "handleGeneralFunc.handleSquareBracket.Start:", n.TidiedText(), n.Kind().String())
 			isFuncParamHandled = true
-			jumpTo = r.handleSquareBracket(n)
+			jumpTo = squareBracketResetter{}.Run(n)
 			skipAll = jumpTo == nil
-			println("\t", "handleGeneralFunc.handleSquareBracket.JumpTo:", jumpTo.TidiedText(), jumpTo.Kind().String())
-			println()
 			return true
 		default:
 			return true
@@ -210,126 +192,6 @@ func (r funcResetter) handleParameterFunc(head *Node) *Node {
 	return n
 }
 
-// handleParenthesis starts with '('
-func (r funcResetter) handleParenthesis(head *Node) *Node {
-	if head.Kind() != KindParenthesisLeft {
-		return head.Next()
-	}
-
-	var (
-		skipAll bool
-		jumpTo  *Node
-	)
-
-	return head.IterNext(func(n *Node) bool {
-		if skipAll {
-			return true
-		}
-
-		if jumpTo != nil {
-			if n != jumpTo {
-				return true
-			}
-			jumpTo = nil
-		}
-
-		switch n.Kind() {
-		case KindParenthesisRight: // return kind
-			return false
-		case KindComment, KindComma, KindParenthesisLeft:
-			return true
-		default:
-			println("\t", "handleParenthesis.handleParenthesisParam.Start:", n.TidiedText(), n.Kind().String())
-			jumpTo = r.handleParenthesisParam(n, false)
-			skipAll = jumpTo == nil
-			println("\t", "handleParenthesis.handleParenthesisParam.JumpTo:", jumpTo.TidiedText(), jumpTo.Kind().String())
-			println()
-			return true
-		}
-
-	})
-}
-
-// handleParenthesisParam starts with next of '(' and ','
-func (r funcResetter) handleParenthesisParam(head *Node, isReceiver bool) *Node {
-	var (
-		skipAll          bool
-		jumpTo           *Node
-		buf              []*Node
-		hasSpaceAfterRaw bool
-		hasName          bool
-	)
-
-	nameKind := KindParamName
-	typeKind := KindParamType
-	if isReceiver {
-		nameKind = KindMethodReceiverName
-		typeKind = KindMethodReceiverType
-	}
-
-	return head.IterNext(func(n *Node) bool {
-		if skipAll {
-			return true
-		}
-
-		if jumpTo != nil {
-			if n != jumpTo {
-				return true
-			}
-			jumpTo = nil
-		}
-
-		switch n.Kind() {
-		case KindComma, KindParenthesisRight: // return kind
-			if len(buf) == 0 {
-				return false
-			}
-
-			if hasName {
-				buf[0].SetKind(nameKind)
-				buf[0].Print()
-				buf = buf[1:]
-			}
-
-			h := buf[0]
-			next := buf[len(buf)-1].Next()
-			h = h.CombineNext(typeKind, buf[1:]...)
-			h.ReplaceNext(next)
-			h.Print()
-			return false
-		case KindSquareBracketLeft: // ignore including generic
-			println("\t", "handleParenthesisParam.handleSquareBracket.Start:", n.TidiedText(), n.Kind().String())
-			jumpTo = r.handleSquareBracket(n, func(nn *Node) {
-				buf = append(buf, nn)
-			}).Next()
-			skipAll = jumpTo == nil
-			println("\t", "handleParenthesisParam.handleSquareBracket.JumpTo:", jumpTo.TidiedText(), jumpTo.Kind().String())
-			println()
-			return true
-		case KindComment, KindParenthesisLeft:
-			return true
-		case KindSpace:
-			if len(buf) != 0 {
-				hasSpaceAfterRaw = true
-			}
-			return true
-		case KindFunc:
-			println("\t", "handleParenthesisParam.funcResetter.Start:", n.TidiedText(), n.Kind().String())
-			jumpTo = funcResetter{isParameter: true}.Run(n)
-			skipAll = jumpTo == nil
-			println("\t", "handleParenthesisParam.funcResetter.JumpTo:", jumpTo.TidiedText(), jumpTo.Kind().String())
-			println()
-			return true
-		default:
-			if hasSpaceAfterRaw {
-				hasName = true
-			}
-			buf = append(buf, n)
-			return true
-		}
-	})
-}
-
 // handleSingleReturnType starts with ' '
 func (r funcResetter) handleSingleReturnType(head *Node) *Node {
 	if head.Kind() != KindSpace {
@@ -341,7 +203,7 @@ func (r funcResetter) handleSingleReturnType(head *Node) *Node {
 	found := head.findNext(newSet(KindComment), findNodeOption{TargetReverse: true})
 	switch found.Kind() {
 	case KindParenthesisLeft:
-		return r.handleParenthesis(head)
+		return parenthesisResetter{}.Run(head)
 	case KindFunc:
 		return r.handleParameterFunc(head)
 	}
@@ -350,15 +212,18 @@ func (r funcResetter) handleSingleReturnType(head *Node) *Node {
 		buf []*Node
 	)
 
+	defer func() {
+		if len(buf) != 0 {
+			n := buf[0]
+			next := buf[len(buf)-1].Next()
+			n = n.CombineNext(KindParamType, buf[1:]...)
+			n.ReplaceNext(next)
+		}
+	}()
+
 	return head.IterNext(func(n *Node) bool {
 		switch n.Kind() {
 		case KindNewLine, KindSpace: // return kind
-			if len(buf) != 0 {
-				n := buf[0]
-				next := buf[len(buf)-1].Next()
-				n = n.CombineNext(KindParamType, buf[1:]...)
-				n.ReplaceNext(next)
-			}
 			return false
 		case KindComment:
 			return true
@@ -367,15 +232,4 @@ func (r funcResetter) handleSingleReturnType(head *Node) *Node {
 			return true
 		}
 	})
-}
-
-// handleCurlyBracket starts with '{'
-func (r funcResetter) handleCurlyBracket(head *Node, hook ...func(*Node)) *Node {
-	// TODO: handle content
-	return head.skipNestNext(KindCurlyBracketLeft, KindCurlyBracketRight, hook...)
-}
-
-func (r funcResetter) handleSquareBracket(head *Node, hook ...func(*Node)) *Node {
-	// TODO: handle generic
-	return head.skipNestNext(KindSquareBracketLeft, KindSquareBracketRight, hook...)
 }

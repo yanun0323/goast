@@ -344,23 +344,15 @@ func (n *Node) setNext(nn *Node) {
 }
 
 // skipNestNext helper
-func (n *Node) skipNestNext(nestLeft, nestRight Kind, hook ...func(*Node)) *Node {
+func (n *Node) skipNestNext(nestLeft, nestRight Kind, hooks ...func(*Node)) *Node {
 	count := 1
 	if n.Kind() == nestLeft {
-		if len(hook) != 0 {
-			for _, h := range hook {
-				h(n)
-			}
-		}
+		handleHook(n, hooks...)
 		n = n.Next() // skip first nestLeft
 	}
 
 	return n.IterNext(func(n *Node) bool {
-		if len(hook) != 0 {
-			for _, h := range hook {
-				h(n)
-			}
-		}
+		handleHook(n, hooks...)
 
 		switch n.Kind() {
 		case nestLeft:
@@ -379,7 +371,6 @@ func (n *Node) skipNestNext(nestLeft, nestRight Kind, hook ...func(*Node)) *Node
 func (n *Node) findNext(
 	target set[Kind],
 	opt findNodeOption,
-	// filters ...func(*Node, findNodeOption) bool,
 ) *Node {
 	var (
 		parenthesisLeftCount   int
@@ -430,17 +421,6 @@ func (n *Node) findNext(
 		if target.Contain(n.Kind()) {
 			return opt.TargetReverse
 		}
-
-		// for _, filter := range filters {
-		// 	return filter(n, findNodeOption{
-		// 		IsInsideParenthesis:    parenthesisLeftCount != 0,
-		// 		IsInsideCurlyBracket:   curlyBracketLeftCount != 0,
-		// 		IsInsideSquareBracket:  squareBracketLeftCount != 0,
-		// 		IsOutsideParenthesis:   parenthesisLeftCount == 0,
-		// 		IsOutsideCurlyBracket:  curlyBracketLeftCount == 0,
-		// 		IsOutsideSquareBracket: squareBracketLeftCount == 0,
-		// 	})
-		// }
 
 		return true
 	})
