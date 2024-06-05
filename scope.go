@@ -1,9 +1,10 @@
-
 package goast
 
 import (
 	"sort"
 	"strings"
+
+	"github.com/yanun0323/goast/kind"
 )
 
 /*
@@ -119,28 +120,28 @@ func (k ScopeKind) String() string {
 	}
 }
 
-func (k ScopeKind) ToKind() Kind {
+func (k ScopeKind) ToKind() kind.Kind {
 	switch k {
 	case ScopeUnknown:
-		return KindRaw
+		return kind.Raw
 	case ScopePackage:
-		return KindPackage
+		return kind.Package
 	case ScopeComment:
-		return KindComment
+		return kind.Comment
 	case ScopeInnerComment:
-		return KindComment
+		return kind.Comment
 	case ScopeImport:
-		return KindImport
+		return kind.Import
 	case ScopeVariable:
-		return KindVar
+		return kind.Var
 	case ScopeConst:
-		return KindConst
+		return kind.Const
 	case ScopeType:
-		return KindType
+		return kind.Type
 	case ScopeFunc:
-		return KindFunc
+		return kind.Func
 	default:
-		return KindNone
+		return kind.None
 	}
 }
 

@@ -4,24 +4,26 @@ import (
 	"slices"
 	"strings"
 
+	"github.com/yanun0323/goast/charset"
 	"github.com/yanun0323/goast/helper"
+	"github.com/yanun0323/goast/kind"
 )
 
 /*
 Node stands for any element in go language.
 */
 
-func NewNode(line int, text string, kind ...Kind) *Node {
-	if len(kind) != 0 {
-		return &Node{line: line, kind: kind[0], text: text}
+func NewNode(line int, text string, kinds ...kind.Kind) *Node {
+	if len(kinds) != 0 {
+		return &Node{line: line, kind: kinds[0], text: text}
 	}
 
-	return &Node{line: line, kind: NewKind(text), text: text}
+	return &Node{line: line, kind: kind.New(text), text: text}
 }
 
 type Node struct {
 	line int
-	kind Kind
+	kind kind.Kind
 	text string
 
 	prev *Node
@@ -196,7 +198,7 @@ func (n *Node) RemoveNext() *Node {
 // and returns new node.
 //
 // e.g. (nn3 - nn2 - nn1 - n)
-func (n *Node) CombinePrev(k Kind, nns ...*Node) *Node {
+func (n *Node) CombinePrev(k kind.Kind, nns ...*Node) *Node {
 	n.SetKind(k)
 
 	if len(nns) == 0 {
@@ -231,7 +233,7 @@ func (n *Node) CombinePrev(k Kind, nns ...*Node) *Node {
 // and returns new node.
 //
 // e.g. (n - nn1 - nn2 - nn3)
-func (n *Node) CombineNext(k Kind, nns ...*Node) *Node {
+func (n *Node) CombineNext(k kind.Kind, nns ...*Node) *Node {
 	n.SetKind(k)
 
 	if len(nns) == 0 {
@@ -277,15 +279,15 @@ func (n *Node) Line() int {
 	return n.line
 }
 
-func (n *Node) Kind() Kind {
+func (n *Node) Kind() kind.Kind {
 	if n == nil {
-		return KindNone
+		return kind.None
 	}
 
 	return n.kind
 }
 
-func (n *Node) SetKind(k Kind) {
+func (n *Node) SetKind(k kind.Kind) {
 	if n != nil {
 		n.kind = k
 	}
@@ -378,11 +380,11 @@ func (n *Node) setNext(nn *Node) {
 }
 
 // skipNestNext helper
-func (n *Node) skipNestNext(nestLeft, nestRight Kind, hooks ...func(*Node)) *Node {
+func (n *Node) skipNestNext(nestLeft, nestRight kind.Kind, hooks ...func(*Node)) *Node {
 	count := 1
 	if n.Kind() == nestLeft {
 		handleHook(n, hooks...)
-		n = n.findNext([]Kind{nestLeft}, findNodeOption{}, hooks...).Next() // skip first nestLeft
+		n = n.findNext([]kind.Kind{nestLeft}, findNodeOption{}, hooks...).Next() // skip first nestLeft
 	}
 
 	return n.IterNext(func(n *Node) bool {
@@ -403,7 +405,7 @@ func (n *Node) skipNestNext(nestLeft, nestRight Kind, hooks ...func(*Node)) *Nod
 
 // findNext helper
 func (n *Node) findNext(
-	target []Kind,
+	target []kind.Kind,
 	opt findNodeOption,
 	hooks ...func(*Node),
 ) *Node {
@@ -412,23 +414,23 @@ func (n *Node) findNext(
 		curlyBracketLeftCount  int
 		squareBracketLeftCount int
 
-		targetKindSet = newSet(target...)
+		targetKindSet = charset.New(target...)
 	)
 
 	return n.IterNext(func(n *Node) bool {
 		handleHook(n, hooks...)
 		switch n.Kind() {
-		case KindParenthesisLeft:
+		case kind.ParenthesisLeft:
 			parenthesisLeftCount++
-		case KindCurlyBracketLeft:
+		case kind.CurlyBracketLeft:
 			curlyBracketLeftCount++
-		case KindSquareBracketLeft:
+		case kind.SquareBracketLeft:
 			squareBracketLeftCount++
-		case KindParenthesisRight:
+		case kind.ParenthesisRight:
 			parenthesisLeftCount--
-		case KindCurlyBracketRight:
+		case kind.CurlyBracketRight:
 			curlyBracketLeftCount--
-		case KindSquareBracketRight:
+		case kind.SquareBracketRight:
 			squareBracketLeftCount--
 		}
 

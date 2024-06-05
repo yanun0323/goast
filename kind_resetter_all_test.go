@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/yanun0323/goast/assert"
+	"github.com/yanun0323/goast/kind"
 )
 
 func TestCommonResetter(t *testing.T) {
@@ -20,19 +21,19 @@ func TestCommonResetter(t *testing.T) {
 	_ = head.IterNext(func(n *Node) bool {
 		switch n.Text() {
 		case "Hello":
-			a.Equal(n.Kind(), KindFuncName, fmt.Sprintf("%s should be KindFuncName", n.Text()))
+			a.Equal(n.Kind(), kind.FuncName, fmt.Sprintf("%s should be kind.FuncName", n.Text()))
 		case "ctx",
 			"m",
 			"f1",
 			"f2":
-			a.Equal(n.Kind(), KindParamName, fmt.Sprintf("%s should be KindParamName", n.Text()))
+			a.Equal(n.Kind(), kind.ParamName, fmt.Sprintf("%s should be kind.ParamName", n.Text()))
 		case "context.Context",
 			"map[string]string",
 			"func(int) error",
 			"func(num int8) (int32, error)",
 			"string",
 			"error":
-			a.Equal(n.Kind(), KindParamType, fmt.Sprintf("%s should be KindParamType", n.Text()))
+			a.Equal(n.Kind(), kind.ParamType, fmt.Sprintf("%s should be kind.ParamType", n.Text()))
 		}
 
 		return true

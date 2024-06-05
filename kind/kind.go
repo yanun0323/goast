@@ -84,7 +84,7 @@ func (k Kind) GetClose() (Kind, bool) {
 	}
 }
 
-func NewKind(s string) Kind {
+func New(s string) Kind {
 	if len(s) == 0 {
 		return None
 	}

@@ -6,6 +6,7 @@ import (
 
 	"github.com/yanun0323/goast/charset"
 	"github.com/yanun0323/goast/helper"
+	"github.com/yanun0323/goast/kind"
 )
 
 var ErrOutOfRange = errors.New("out of range")
@@ -32,21 +33,21 @@ var (
 	}
 
 	_parenthesisExtractor = &extractor{
-		kind:              KindKeyword,
+		kind:              kind.Keyword,
 		SeparatorCharset:  charset.SeparatorCharset,
 		ReturnKeyword:     ")",
 		SkipReturnKeyword: "",
 	}
 
 	_curlyBracketExtractor = &extractor{
-		kind:              KindKeyword,
+		kind:              kind.Keyword,
 		SeparatorCharset:  charset.SeparatorCharset,
 		ReturnKeyword:     "}",
 		SkipReturnKeyword: "",
 	}
 
 	_commentExtractor = &extractor{
-		kind:              KindComment,
+		kind:              kind.Comment,
 		IncludeOpen:       true,
 		SeparatorCharset:  nil,
 		ReturnKeyword:     "\n",
@@ -54,7 +55,7 @@ var (
 	}
 
 	_innerCommentExtractor = &extractor{
-		kind:              KindComment,
+		kind:              kind.Comment,
 		IncludeOpen:       true,
 		IncludeClose:      true,
 		SeparatorCharset:  nil,
@@ -63,7 +64,7 @@ var (
 	}
 
 	_stringExtractor = &extractor{
-		kind:              KindString,
+		kind:              kind.String,
 		IncludeOpen:       true,
 		IncludeClose:      true,
 		SeparatorCharset:  nil,
@@ -72,7 +73,7 @@ var (
 	}
 
 	_multilineStringExtractor = &extractor{
-		kind:              KindString,
+		kind:              kind.String,
 		IncludeOpen:       true,
 		IncludeClose:      true,
 		SeparatorCharset:  nil,
@@ -111,7 +112,7 @@ func (de deeperExtract) PrefixFit(s []byte) (*extractor, bool) {
 }
 
 type extractor struct {
-	kind              Kind
+	kind              kind.Kind
 	IncludeOpen       bool
 	IncludeClose      bool
 	SeparatorCharset  charset.Set[byte]
@@ -151,7 +152,7 @@ func (e *extractor) Run(text []byte, buf *strings.Builder, i *int, line *int) (*
 		})
 	}
 
-	pushNode := func(useLine bool, kind ...Kind) {
+	pushNode := func(useLine bool, kind ...kind.Kind) {
 		if buf.Len() == 0 {
 			return
 		}
@@ -225,12 +226,12 @@ func (e *extractor) Run(text []byte, buf *strings.Builder, i *int, line *int) (*
 	return head, nil
 }
 
-func (e *extractor) Kind() []Kind {
-	if e == nil || e.kind == KindRaw {
+func (e *extractor) Kind() []kind.Kind {
+	if e == nil || e.kind == kind.Raw {
 		return nil
 	}
 
-	return []Kind{e.kind}
+	return []kind.Kind{e.kind}
 }
 
 func (e *extractor) DeeperExtract() deeperExtract {

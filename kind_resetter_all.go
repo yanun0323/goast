@@ -1,6 +1,10 @@
 package goast
 
-import "github.com/yanun0323/goast/helper"
+import (
+	"github.com/yanun0323/goast/charset"
+	"github.com/yanun0323/goast/helper"
+	"github.com/yanun0323/goast/kind"
+)
 
 func kindReset(n *Node) *Node {
 	return generalResetter().Run(n)
@@ -18,20 +22,20 @@ func handleHook(n *Node, hooks ...func(*Node)) {
 
 func generalResetter() kindResetter {
 	return &genericResetter{
-		DeeperResetterTable: map[Kind]kindResetter{
-			KindFunc: funcResetter{isFuncKeywordLeading: true},
+		DeeperResetterTable: map[kind.Kind]kindResetter{
+			kind.Func: funcResetter{isFuncKeywordLeading: true},
 		},
 	}
 }
 
 // genericResetter stands for COMMON genericResetter
 type genericResetter struct {
-	TriggerKind         set[Kind]
+	TriggerKind         charset.Set[kind.Kind]
 	TriggerLimit        int
-	KindChangeTable     map[int]Kind
-	ChangeableKind      set[Kind]
-	ReturnKind          set[Kind]
-	DeeperResetterTable map[Kind]kindResetter
+	KindChangeTable     map[int]kind.Kind
+	ChangeableKind      charset.Set[kind.Kind]
+	ReturnKind          charset.Set[kind.Kind]
+	DeeperResetterTable map[kind.Kind]kindResetter
 }
 
 func (r genericResetter) Run(head *Node, _ ...func(*Node)) *Node {
@@ -57,24 +61,23 @@ func (r genericResetter) Run(head *Node, _ ...func(*Node)) *Node {
 		}
 
 		//  ReturnKind > deeperResetter > TriggerKind > ChangeableKind > UnchangeableKind
-		kind := n.Kind()
-		if r.ReturnKind.Contain(kind) {
+		if r.ReturnKind.Contain(n.Kind()) {
 			return false
 		}
 
-		if resetter, ok := r.DeeperResetterTable[kind]; ok && resetter != nil {
+		if resetter, ok := r.DeeperResetterTable[n.Kind()]; ok && resetter != nil {
 			jumpTo = resetter.Run(n)
 			skipAll = jumpTo == nil
 			return true
 		}
 
-		if r.TriggerKind.Contain(kind) {
+		if r.TriggerKind.Contain(n.Kind()) {
 			triggered = true
 			triggerIndex = 0
 			return true
 		}
 
-		if triggerLimit == 0 || !triggered || !r.ChangeableKind.Contain(kind) {
+		if triggerLimit == 0 || !triggered || !r.ChangeableKind.Contain(n.Kind()) {
 			return true
 		}
 
@@ -83,7 +86,7 @@ func (r genericResetter) Run(head *Node, _ ...func(*Node)) *Node {
 			triggerLimit--
 		}
 
-		if k, ok := r.KindChangeTable[triggerIndex]; ok && k != KindNone {
+		if k, ok := r.KindChangeTable[triggerIndex]; ok && k != kind.None {
 			n.SetKind(k)
 		}
 
@@ -93,8 +96,8 @@ func (r genericResetter) Run(head *Node, _ ...func(*Node)) *Node {
 
 type paramResetter struct {
 	skip        bool
-	resetKind   Kind
-	returnKinds []Kind
+	resetKind   kind.Kind
+	returnKinds []kind.Kind
 }
 
 func (r paramResetter) Run(head *Node, hooks ...func(*Node)) *Node {
@@ -109,7 +112,7 @@ func (r paramResetter) Run(head *Node, hooks ...func(*Node)) *Node {
 		return head.Next()
 	}
 
-	returnKindSet := newSet(r.returnKinds...)
+	returnKindSet := charset.New(r.returnKinds...)
 
 	defer func() {
 		if len(buf) != 0 {
@@ -144,23 +147,23 @@ func (r paramResetter) Run(head *Node, hooks ...func(*Node)) *Node {
 		})
 
 		switch n.Kind() {
-		case KindParenthesisLeft:
+		case kind.ParenthesisLeft:
 			jumpTo = parenthesisResetter{skip: r.skip}.Run(n, appendedHooks...)
 			skipAll = jumpTo == nil
 			return true
-		case KindCurlyBracketLeft:
+		case kind.CurlyBracketLeft:
 			jumpTo = curlyBracketResetter{skip: r.skip}.Run(n, appendedHooks...)
 			skipAll = jumpTo == nil
 			return true
-		case KindSquareBracketLeft:
+		case kind.SquareBracketLeft:
 			jumpTo = squareBracketResetter{skip: r.skip}.Run(n, appendedHooks...)
 			skipAll = jumpTo == nil
 			return true
-		case KindFunc:
+		case kind.Func:
 			jumpTo = funcResetter{isFuncKeywordLeading: true}.Run(n, hooks...)
 			skipAll = jumpTo == nil
 			return true
-		case KindComment:
+		case kind.Comment:
 			return true
 		default:
 			if !r.skip {

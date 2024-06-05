@@ -5,40 +5,41 @@ import (
 
 	"github.com/yanun0323/goast/assert"
 	"github.com/yanun0323/goast/charset"
+	"github.com/yanun0323/goast/kind"
 )
 
 func TestTrie(t *testing.T) {
 	a := assert.New(t)
 
-	root := newTrie(map[string]*Kind{})
-	basic := KindBasic
+	root := newTrie(map[string]*kind.Kind{})
+	basic := kind.Basic
 	_ = root.AddText("any", &basic)
-	kind, ok := root.FindText("any")
+	k, ok := root.FindText("any")
 	a.Require(ok, "find 'any'")
-	a.Require(kind != nil && *kind == KindBasic, "kind 'any'", kind.PointerString())
+	a.Require(k != nil && *k == kind.Basic, "k 'any'", k.PointerString())
 
-	kind, ok = root.FindText("an")
+	k, ok = root.FindText("an")
 	a.Require(ok, "find 'an'")
-	a.Require(kind == nil, "kind 'an'", kind.PointerString())
+	a.Require(k == nil, "k 'an'", k.PointerString())
 
-	kind, ok = root.FindText("ann")
+	k, ok = root.FindText("ann")
 	a.Require(!ok, "find 'ann'")
-	a.Require(kind == nil, "kind 'ann'", kind.PointerString())
+	a.Require(k == nil, "k 'ann'", k.PointerString())
 
-	comment := KindComment
+	comment := kind.Comment
 	_ = root.AddText("ayy", &comment)
 
-	kind, ok = root.FindText("any")
+	k, ok = root.FindText("any")
 	a.Require(ok, "find 'any' 2")
-	a.Require(kind != nil && *kind == KindBasic, "kind 'any' 2", kind.PointerString())
+	a.Require(k != nil && *k == kind.Basic, "k 'any' 2", k.PointerString())
 
-	kind, ok = root.FindText("ayy")
+	k, ok = root.FindText("ayy")
 	a.Require(ok, "find 'ayy'")
-	a.Require(kind != nil && *kind == KindComment, "kind 'ayy'", kind.PointerString())
+	a.Require(k != nil && *k == kind.Comment, "k 'ayy'", k.PointerString())
 
-	kind, ok = root.FindByte([]byte("ayy"))
+	k, ok = root.FindByte([]byte("ayy"))
 	a.Require(ok, "find 'ayy' 2")
-	a.Require(kind != nil && *kind == KindComment, "kind 'ayy' 2", kind.PointerString())
+	a.Require(k != nil && *k == kind.Comment, "k 'ayy' 2", k.PointerString())
 }
 
 func TestTrieComment(t *testing.T) {

@@ -4,6 +4,7 @@ import (
 	"path/filepath"
 
 	"github.com/yanun0323/goast/helper"
+	"github.com/yanun0323/goast/kind"
 )
 
 type Ast interface {
@@ -93,11 +94,11 @@ func findPackageName(scs []Scope) string {
 
 	packageKeywordAppeared := false
 	result := packageScope.Node().IterNext(func(n *Node) bool {
-		if packageKeywordAppeared && n.Kind() == KindRaw {
+		if packageKeywordAppeared && n.Kind() == kind.Raw {
 			return false
 		}
 
-		if n.Kind() == KindPackage {
+		if n.Kind() == kind.Package {
 			packageKeywordAppeared = true
 		}
 

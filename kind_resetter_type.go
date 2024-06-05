@@ -1,12 +1,14 @@
 package goast
 
+import "github.com/yanun0323/goast/kind"
+
 // typeResetter head should be 'type'
 //
 // return key kind: '}' '\n'
 type typeResetter struct{}
 
 func (r typeResetter) Run(head *Node, hooks ...func(*Node)) *Node {
-	if head.Kind() != KindType {
+	if head.Kind() != kind.Type {
 		handleHook(head, hooks...)
 		return head.Next()
 	}
@@ -33,7 +35,7 @@ func (r typeResetter) Run(head *Node, hooks ...func(*Node)) *Node {
 
 		if exception {
 			switch n.Kind() {
-			case KindCurlyBracketRight, KindNewLine: // return kind
+			case kind.CurlyBracketRight, kind.NewLine: // return kind
 				return false
 			default:
 				return true
@@ -42,10 +44,10 @@ func (r typeResetter) Run(head *Node, hooks ...func(*Node)) *Node {
 
 		if !isTypeNameAssigned {
 			switch n.Kind() {
-			case KindCurlyBracketRight, KindNewLine: // return kind
+			case kind.CurlyBracketRight, kind.NewLine: // return kind
 				return false
-			case KindRaw:
-				n.SetKind(KindTypeName)
+			case kind.Raw:
+				n.SetKind(kind.TypeName)
 				isTypeNameAssigned = true
 			default:
 				return true
@@ -53,25 +55,25 @@ func (r typeResetter) Run(head *Node, hooks ...func(*Node)) *Node {
 		}
 
 		switch n.Kind() {
-		case KindComment:
+		case kind.Comment:
 			return true
-		case KindInterface:
+		case kind.Interface:
 			jumpTo = interfaceResetter{}.Run(n, hooks...)
 			skipAll = jumpTo == nil
 			return true
-		case KindStruct:
+		case kind.Struct:
 			jumpTo = structResetter{}.Run(n, hooks...)
 			skipAll = jumpTo == nil
 			return true
-		case KindFunc:
+		case kind.Func:
 			jumpTo = funcResetter{isFuncKeywordLeading: true}.Run(n, hooks...)
 			skipAll = jumpTo == nil
 			return true
-		case KindRaw:
-			jumpTo = paramResetter{resetKind: KindParamType, returnKinds: []Kind{KindNewLine}}.Run(n, hooks...)
+		case kind.Raw:
+			jumpTo = paramResetter{resetKind: kind.ParamType, returnKinds: []kind.Kind{kind.NewLine}}.Run(n, hooks...)
 			skipAll = jumpTo == nil
 			return true
-		case KindSquareBracketLeft:
+		case kind.SquareBracketLeft:
 			jumpTo = squareBracketResetter{skip: true}.Run(n, hooks...)
 			skipAll = jumpTo == nil
 			return true
@@ -92,7 +94,7 @@ func (r interfaceResetter) Run(head *Node, hooks ...func(*Node)) *Node {
 		jumpTo  *Node
 	)
 
-	head = head.findNext([]Kind{KindCurlyBracketLeft}, findNodeOption{}, hooks...) // set head to '{'
+	head = head.findNext([]kind.Kind{kind.CurlyBracketLeft}, findNodeOption{}, hooks...) // set head to '{'
 
 	return head.IterNext(func(n *Node) bool {
 		handleHook(n, hooks...)
@@ -107,9 +109,9 @@ func (r interfaceResetter) Run(head *Node, hooks ...func(*Node)) *Node {
 			jumpTo = nil
 		}
 		switch n.Kind() {
-		case KindCurlyBracketRight: // return kind
+		case kind.CurlyBracketRight: // return kind
 			return false
-		case KindTab, KindComment, KindNewLine, KindSpace, KindCurlyBracketLeft:
+		case kind.Tab, kind.Comment, kind.NewLine, kind.Space, kind.CurlyBracketLeft:
 			return true
 		default:
 			jumpTo = funcResetter{
@@ -132,7 +134,7 @@ func (r structResetter) Run(head *Node, hooks ...func(*Node)) *Node {
 		jumpTo  *Node
 	)
 
-	head = head.findNext([]Kind{KindCurlyBracketLeft}, findNodeOption{}, hooks...).Next() // skip first of head to '{'
+	head = head.findNext([]kind.Kind{kind.CurlyBracketLeft}, findNodeOption{}, hooks...).Next() // skip first of head to '{'
 
 	return head.IterNext(func(n *Node) bool {
 		handleHook(n, hooks...)
@@ -148,9 +150,9 @@ func (r structResetter) Run(head *Node, hooks ...func(*Node)) *Node {
 		}
 
 		switch n.Kind() {
-		case KindCurlyBracketRight: // return kind
+		case kind.CurlyBracketRight: // return kind
 			return false
-		case KindComment, KindCurlyBracketLeft, KindNewLine:
+		case kind.Comment, kind.CurlyBracketLeft, kind.NewLine:
 			return true
 		default:
 			jumpTo = r.handleStructRow(n, hooks...)
@@ -189,21 +191,21 @@ func (r structResetter) handleStructRow(head *Node, hooks ...func(*Node)) *Node 
 		}
 
 		switch n.Kind() {
-		case KindNewLine: // return kind
+		case kind.NewLine: // return kind
 			return false
-		case KindComment, KindNewLine, KindTab, KindSpace, KindComma:
+		case kind.Comment, kind.NewLine, kind.Tab, kind.Space, kind.Comma:
 			return true
-		case KindRaw:
+		case kind.Raw:
 			if paramNameCount != 0 {
 				paramNameCount--
-				n.SetKind(KindParamName)
+				n.SetKind(kind.ParamName)
 				return true
 			}
-			jumpTo = paramResetter{resetKind: KindParamType, returnKinds: []Kind{KindNewLine}}.Run(n, hooks...)
+			jumpTo = paramResetter{resetKind: kind.ParamType, returnKinds: []kind.Kind{kind.NewLine}}.Run(n, hooks...)
 			skipAll = jumpTo == nil
 			return true
 		default:
-			jumpTo = paramResetter{resetKind: KindParamType, returnKinds: []Kind{KindNewLine}}.Run(n, hooks...)
+			jumpTo = paramResetter{resetKind: kind.ParamType, returnKinds: []kind.Kind{kind.NewLine}}.Run(n, hooks...)
 			skipAll = jumpTo == nil
 			return true
 		}
@@ -221,17 +223,17 @@ func (r structResetter) getRowNameCount(head *Node) int {
 
 	_ = head.IterNext(func(n *Node) bool {
 		switch n.Kind() {
-		case KindNewLine: // return kind
+		case kind.NewLine: // return kind
 			if hasSpaceOrAfterRaw {
 				nameCount = cacheNameCount
 			}
 			return false
-		case KindComment, KindTab:
+		case kind.Comment, kind.Tab:
 			return true
-		case KindRaw:
+		case kind.Raw:
 			rawCount++
 			return true
-		case KindSpace:
+		case kind.Space:
 			if rawCount != 0 {
 				if !hasComma && cacheNameCount == 0 {
 					cacheNameCount++
@@ -239,7 +241,7 @@ func (r structResetter) getRowNameCount(head *Node) int {
 				hasSpaceOrAfterRaw = true
 			}
 			return true
-		case KindComma:
+		case kind.Comma:
 			if cacheNameCount == 0 {
 				cacheNameCount++
 			}

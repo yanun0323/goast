@@ -1,6 +1,9 @@
 package goast
 
-import "github.com/yanun0323/goast/helper"
+import (
+	"github.com/yanun0323/goast/helper"
+	"github.com/yanun0323/goast/kind"
+)
 
 // parenthesisResetter starts with '('
 type parenthesisResetter struct {
@@ -10,10 +13,10 @@ type parenthesisResetter struct {
 
 func (r parenthesisResetter) Run(head *Node, hooks ...func(*Node)) *Node {
 	if r.skip {
-		return head.skipNestNext(KindParenthesisLeft, KindParenthesisRight, hooks...)
+		return head.skipNestNext(kind.ParenthesisLeft, kind.ParenthesisRight, hooks...)
 	}
 
-	if head.Kind() != KindParenthesisLeft {
+	if head.Kind() != kind.ParenthesisLeft {
 		handleHook(head, hooks...)
 		return head.Next()
 	}
@@ -37,9 +40,9 @@ func (r parenthesisResetter) Run(head *Node, hooks ...func(*Node)) *Node {
 		}
 
 		switch n.Kind() {
-		case KindParenthesisRight: // return kind
+		case kind.ParenthesisRight: // return kind
 			return false
-		case KindComment, KindComma, KindParenthesisLeft, KindTab, KindNewLine:
+		case kind.Comment, kind.Comma, kind.ParenthesisLeft, kind.Tab, kind.NewLine:
 			return true
 		default:
 			jumpTo = r.handleParenthesisParam(n, r.isReceiver, hooks...)
@@ -60,11 +63,11 @@ func (r parenthesisResetter) handleParenthesisParam(head *Node, isReceiver bool,
 		hasName          bool
 	)
 
-	nameKind := KindParamName
-	typeKind := KindParamType
+	nameKind := kind.ParamName
+	typeKind := kind.ParamType
 	if isReceiver {
-		nameKind = KindMethodReceiverName
-		typeKind = KindMethodReceiverType
+		nameKind = kind.MethodReceiverName
+		typeKind = kind.MethodReceiverType
 	}
 
 	defer func() {
@@ -95,22 +98,22 @@ func (r parenthesisResetter) handleParenthesisParam(head *Node, isReceiver bool,
 		}
 
 		switch n.Kind() {
-		case KindComma, KindParenthesisRight: // return kind
+		case kind.Comma, kind.ParenthesisRight: // return kind
 			return false
-		case KindSquareBracketLeft: // ignore including generic
+		case kind.SquareBracketLeft: // ignore including generic
 			jumpTo = squareBracketResetter{}.Run(n, append(hooks, func(nn *Node) {
 				buf = helper.AppendUnrepeatable(buf, nn)
 			})...).Next()
 			skipAll = jumpTo == nil
 			return true
-		case KindComment, KindParenthesisLeft, KindTab, KindNewLine:
+		case kind.Comment, kind.ParenthesisLeft, kind.Tab, kind.NewLine:
 			return true
-		case KindSpace:
+		case kind.Space:
 			if len(buf) != 0 {
 				hasSpaceAfterRaw = true
 			}
 			return true
-		case KindFunc:
+		case kind.Func:
 			jumpTo = funcResetter{isParameter: true}.Run(n, hooks...)
 			skipAll = jumpTo == nil
 			return true
@@ -131,11 +134,11 @@ type curlyBracketResetter struct {
 
 func (r curlyBracketResetter) Run(head *Node, hooks ...func(*Node)) *Node {
 	if r.skip {
-		return head.skipNestNext(KindCurlyBracketLeft, KindCurlyBracketRight, hooks...)
+		return head.skipNestNext(kind.CurlyBracketLeft, kind.CurlyBracketRight, hooks...)
 	}
 
 	// TODO: handle content
-	return head.skipNestNext(KindCurlyBracketLeft, KindCurlyBracketRight, hooks...)
+	return head.skipNestNext(kind.CurlyBracketLeft, kind.CurlyBracketRight, hooks...)
 }
 
 // squareBracketResetter
@@ -145,9 +148,9 @@ type squareBracketResetter struct {
 
 func (r squareBracketResetter) Run(head *Node, hooks ...func(*Node)) *Node {
 	if r.skip {
-		return head.skipNestNext(KindSquareBracketLeft, KindSquareBracketRight, hooks...)
+		return head.skipNestNext(kind.SquareBracketLeft, kind.SquareBracketRight, hooks...)
 	}
 
 	// TODO: handle generic
-	return head.skipNestNext(KindSquareBracketLeft, KindSquareBracketRight, hooks...)
+	return head.skipNestNext(kind.SquareBracketLeft, kind.SquareBracketRight, hooks...)
 }

@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/yanun0323/goast/assert"
+	"github.com/yanun0323/goast/kind"
 )
 
 func TestTypeResetter(t *testing.T) {
@@ -23,12 +24,12 @@ func TestTypeResetter(t *testing.T) {
 	interfaceResult := typeResetter{}.Run(interfaceNode)
 	a.Nil(interfaceResult, "reset interface node", interfaceResult.Text())
 
-	interfaceAssertMap := map[string]Kind{
-		"Student": KindTypeName,
-		"Meow":    KindFuncName, "SelfIntroduction": KindFuncName, "Laugh": KindFuncName, "Learn": KindFuncName,
-		"loud": KindParamName, "fn": KindParamName,
-		"int32": KindParamType, "string": KindParamType, "float64": KindParamType, "bool": KindParamType,
-		"error": KindParamType, "[]byte": KindParamType,
+	interfaceAssertMap := map[string]kind.Kind{
+		"Student": kind.TypeName,
+		"Meow":    kind.FuncName, "SelfIntroduction": kind.FuncName, "Laugh": kind.FuncName, "Learn": kind.FuncName,
+		"loud": kind.ParamName, "fn": kind.ParamName,
+		"int32": kind.ParamType, "string": kind.ParamType, "float64": kind.ParamType, "bool": kind.ParamType,
+		"error": kind.ParamType, "[]byte": kind.ParamType,
 	}
 	interfaceNode.IterNext(func(n *Node) bool {
 		if expected, ok := interfaceAssertMap[n.Text()]; ok {
@@ -61,14 +62,14 @@ func TestTypeResetter(t *testing.T) {
 	structResult := typeResetter{}.Run(structNode)
 	a.Nil(structResult, "reset struct node", structResult.Text())
 
-	structAssertMap := map[string]Kind{
-		"Student": KindTypeName,
-		"Age":     KindParamName, "Age2": KindParamName, "Relationship": KindParamName, "FuncRelationship": KindParamName,
-		"FuncRelationship2": KindParamName, "FuncRelationship3": KindParamName, "Fn": KindParamName,
-		"n": KindParamName, "nn": KindParamName,
-		"string": KindParamType, "int8": KindParamType, "map[string]string": KindParamType, "int": KindParamType,
-		"int32": KindParamType, "int64": KindParamType, "uint": KindParamType, "uint64": KindParamType,
-		"error": KindParamType, "context.Context": KindParamType,
+	structAssertMap := map[string]kind.Kind{
+		"Student": kind.TypeName,
+		"Age":     kind.ParamName, "Age2": kind.ParamName, "Relationship": kind.ParamName, "FuncRelationship": kind.ParamName,
+		"FuncRelationship2": kind.ParamName, "FuncRelationship3": kind.ParamName, "Fn": kind.ParamName,
+		"n": kind.ParamName, "nn": kind.ParamName,
+		"string": kind.ParamType, "int8": kind.ParamType, "map[string]string": kind.ParamType, "int": kind.ParamType,
+		"int32": kind.ParamType, "int64": kind.ParamType, "uint": kind.ParamType, "uint64": kind.ParamType,
+		"error": kind.ParamType, "context.Context": kind.ParamType,
 	}
 	structNode.IterNext(func(n *Node) bool {
 		if expected, ok := structAssertMap[n.Text()]; ok {
@@ -98,7 +99,7 @@ type reSlice []uint64`
 	otherNode.DebugPrint()
 	a.Nil(otherResult, "reset other node", otherResult.Text())
 
-	otherAssertMap := map[string]Kind{}
+	otherAssertMap := map[string]kind.Kind{}
 	otherNode.IterNext(func(n *Node) bool {
 		if expected, ok := otherAssertMap[n.Text()]; ok {
 			a.Equal(n.Kind(), expected, n.Text())

@@ -1,6 +1,10 @@
 package goast
 
-import "github.com/yanun0323/goast/helper"
+import (
+	"github.com/yanun0323/goast/charset"
+	"github.com/yanun0323/goast/helper"
+	"github.com/yanun0323/goast/kind"
+)
 
 // funcResetter includes:
 //
@@ -31,16 +35,16 @@ func (r funcResetter) Run(head *Node, hooks ...func(*Node)) *Node {
 	}
 
 	if r.isInterfaceDefinition {
-		return r.handleGeneralFunc(head, []Kind{KindNewLine}, hooks...)
+		return r.handleGeneralFunc(head, []kind.Kind{kind.NewLine}, hooks...)
 	}
 
 	if r.isTemporaryFunc(head) {
-		return r.handleGeneralFunc(head, []Kind{KindNewLine}, hooks...)
+		return r.handleGeneralFunc(head, []kind.Kind{kind.NewLine}, hooks...)
 	}
 
 	// handle func keyword leading
 	if r.isFuncKeywordLeading {
-		if head.Kind() != KindFunc {
+		if head.Kind() != kind.Func {
 			handleHook(head, hooks...)
 			return head.Next()
 		}
@@ -72,9 +76,9 @@ func (r funcResetter) Run(head *Node, hooks ...func(*Node)) *Node {
 		// determine func or method
 		if !foundFuncOrMethod {
 			switch n.Kind() {
-			case KindRaw:
+			case kind.Raw:
 				foundFuncOrMethod = true
-			case KindParenthesisLeft:
+			case kind.ParenthesisLeft:
 				foundFuncOrMethod = true
 				isMethod = true
 			default:
@@ -91,10 +95,10 @@ func (r funcResetter) Run(head *Node, hooks ...func(*Node)) *Node {
 		}
 
 		switch n.Kind() {
-		case KindNewLine: // return kind
+		case kind.NewLine: // return kind
 			return false
 		default:
-			jumpTo = r.handleGeneralFunc(head, []Kind{KindNewLine}, hooks...)
+			jumpTo = r.handleGeneralFunc(head, []kind.Kind{kind.NewLine}, hooks...)
 			skipAll = jumpTo == nil
 			return true
 		}
@@ -102,23 +106,23 @@ func (r funcResetter) Run(head *Node, hooks ...func(*Node)) *Node {
 }
 
 // handleTemporaryFunc starts with 'func' or next of 'func'
-func (r funcResetter) handleGeneralFunc(head *Node, returnKinds []Kind, hooks ...func(*Node)) *Node {
+func (r funcResetter) handleGeneralFunc(head *Node, returnKinds []kind.Kind, hooks ...func(*Node)) *Node {
 	var (
 		skipAll bool
 		jumpTo  *Node
 
 		isFuncNameAssigned bool
 		isFuncParamHandled bool
-		isReturnKind       set[Kind]
+		isReturnKind       charset.Set[kind.Kind]
 	)
 
 	if len(returnKinds) != 0 {
-		isReturnKind = newSet(returnKinds...)
+		isReturnKind = charset.New(returnKinds...)
 	} else {
-		isReturnKind = newSet(KindNewLine)
+		isReturnKind = charset.New(kind.NewLine)
 	}
 
-	if head.Kind() == KindFunc {
+	if head.Kind() == kind.Func {
 		handleHook(head, hooks...)
 		head = head.Next() // skip first 'func'
 	}
@@ -142,31 +146,31 @@ func (r funcResetter) handleGeneralFunc(head *Node, returnKinds []Kind, hooks ..
 		}
 
 		switch n.Kind() {
-		case KindComment:
+		case kind.Comment:
 			return true
-		case KindRaw:
+		case kind.Raw:
 			if !isFuncNameAssigned {
-				n.SetKind(KindFuncName)
+				n.SetKind(kind.FuncName)
 				isFuncNameAssigned = true
 			}
 			return true
-		case KindSpace:
+		case kind.Space:
 			if isFuncParamHandled {
 				jumpTo = r.handleSingleReturnType(n, hooks...)
 				skipAll = jumpTo == nil
 				return true
 			}
 			return true
-		case KindParenthesisLeft:
+		case kind.ParenthesisLeft:
 			isFuncParamHandled = true
 			jumpTo = parenthesisResetter{}.Run(n, hooks...)
 			skipAll = jumpTo == nil
 			return true
-		case KindCurlyBracketLeft:
+		case kind.CurlyBracketLeft:
 			jumpTo = curlyBracketResetter{}.Run(n, hooks...)
 			skipAll = jumpTo == nil
 			return true
-		case KindSquareBracketLeft:
+		case kind.SquareBracketLeft:
 			isFuncParamHandled = true
 			jumpTo = squareBracketResetter{}.Run(n, hooks...)
 			skipAll = jumpTo == nil
@@ -180,7 +184,7 @@ func (r funcResetter) handleGeneralFunc(head *Node, returnKinds []Kind, hooks ..
 // isTemporaryFunc starts with 'func' or next of 'func'
 func (r funcResetter) isTemporaryFunc(head *Node) bool {
 	found := head.findNext(
-		[]Kind{KindNewLine, KindCurlyBracketRight},
+		[]kind.Kind{kind.NewLine, kind.CurlyBracketRight},
 		findNodeOption{
 			IsOutsideParenthesis:   true,
 			IsOutsideCurlyBracket:  true,
@@ -188,17 +192,17 @@ func (r funcResetter) isTemporaryFunc(head *Node) bool {
 		},
 	)
 
-	if found.Kind() != KindCurlyBracketRight {
+	if found.Kind() != kind.CurlyBracketRight {
 		return false
 	}
 
-	return found.Next().Kind() == KindParenthesisLeft
+	return found.Next().Kind() == kind.ParenthesisLeft
 }
 
 // handleParameterFunc starts with 'func'
 func (r funcResetter) handleParameterFunc(head *Node, hooks ...func(*Node)) *Node {
-	n := r.handleGeneralFunc(head, []Kind{KindComma, KindParenthesisRight}, hooks...)
-	if n.Kind() == KindParenthesisRight {
+	n := r.handleGeneralFunc(head, []kind.Kind{kind.Comma, kind.ParenthesisRight}, hooks...)
+	if n.Kind() == kind.ParenthesisRight {
 		handleHook(n, hooks...)
 		return n.Next()
 	}
@@ -207,18 +211,18 @@ func (r funcResetter) handleParameterFunc(head *Node, hooks ...func(*Node)) *Nod
 
 // handleSingleReturnType starts with ' '
 func (r funcResetter) handleSingleReturnType(head *Node, hooks ...func(*Node)) *Node {
-	if head.Kind() != KindSpace {
+	if head.Kind() != kind.Space {
 		handleHook(head, hooks...)
 		return head.Next()
 	}
 
 	head = head.Next() // skip first space
 
-	found := head.findNext([]Kind{KindComment}, findNodeOption{TargetReverse: true}, hooks...)
+	found := head.findNext([]kind.Kind{kind.Comment}, findNodeOption{TargetReverse: true}, hooks...)
 	switch found.Kind() {
-	case KindParenthesisLeft:
+	case kind.ParenthesisLeft:
 		return parenthesisResetter{}.Run(head, hooks...)
-	case KindFunc:
+	case kind.Func:
 		return r.handleParameterFunc(head, hooks...)
 	}
 
@@ -230,7 +234,7 @@ func (r funcResetter) handleSingleReturnType(head *Node, hooks ...func(*Node)) *
 		if len(buf) != 0 {
 			n := buf[0]
 			next := buf[len(buf)-1].Next()
-			n = n.CombineNext(KindParamType, buf[1:]...)
+			n = n.CombineNext(kind.ParamType, buf[1:]...)
 			n.ReplaceNext(next)
 		}
 	}()
@@ -238,9 +242,9 @@ func (r funcResetter) handleSingleReturnType(head *Node, hooks ...func(*Node)) *
 	return head.IterNext(func(n *Node) bool {
 		handleHook(n, hooks...)
 		switch n.Kind() {
-		case KindNewLine, KindSpace: // return kind
+		case kind.NewLine, kind.Space: // return kind
 			return false
-		case KindComment:
+		case kind.Comment:
 			return true
 		default:
 			buf = helper.AppendUnrepeatable(buf, n)

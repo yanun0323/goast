@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/yanun0323/goast/assert"
+	"github.com/yanun0323/goast/kind"
 )
 
 func list(values ...string) (head, tail *Node) {
@@ -11,11 +12,11 @@ func list(values ...string) (head, tail *Node) {
 		return nil, nil
 	}
 
-	h := NewNode(0, values[0], KindRaw)
+	h := NewNode(0, values[0], kind.Raw)
 	cur := h
 	t := h.Next()
 	for _, v := range values[1:] {
-		n := NewNode(0, v, KindRaw)
+		n := NewNode(0, v, kind.Raw)
 
 		cur.setNext(n)
 		n.setPrev(cur)
@@ -75,7 +76,7 @@ func TestNilNodeMethod(t *testing.T) {
 	a.NoPanic(func() { n.RemoveNext() })
 	a.NoPanic(func() { n.Line() })
 	a.NoPanic(func() { n.Kind() })
-	a.NoPanic(func() { n.SetKind(KindRaw) })
+	a.NoPanic(func() { n.SetKind(kind.Raw) })
 	a.NoPanic(func() { n.Text() })
 	a.NoPanic(func() { n.Print() })
 	a.NoPanic(func() { n.setPrev(nil) })
@@ -315,7 +316,7 @@ func TestCombine(t *testing.T) {
 	n4, _ := list("4", "5")
 	n5 := n4.Next()
 
-	n1.CombineNext(KindRaw, n2, n3, n4)
+	n1.CombineNext(kind.Raw, n2, n3, n4)
 
 	a.Equal(n1.Text(), "1234")
 	AssertNode(a, n1, r, "1234")
@@ -325,7 +326,7 @@ func TestCombine(t *testing.T) {
 
 	var n *Node
 
-	n = n.CombineNext(KindRaw, n1, n5)
+	n = n.CombineNext(kind.Raw, n1, n5)
 	a.Equal(n.Text(), "12345")
 	AssertNode(a, n, r, "12345")
 }
