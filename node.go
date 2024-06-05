@@ -209,6 +209,10 @@ func (n *Node) CombinePrev(k Kind, nns ...*Node) *Node {
 	buf := make([]string, 0, len(nns)+1)
 	buf = append(buf, n.Text())
 	for _, nn := range nns {
+		if nn == nil {
+			continue
+		}
+
 		buf = append(buf, nn.Text())
 		// make node recyclable to gc
 		nn.Isolate()
@@ -240,6 +244,10 @@ func (n *Node) CombineNext(k Kind, nns ...*Node) *Node {
 	buf := make([]string, 0, len(nns)+1)
 	buf = append(buf, n.Text())
 	for _, nn := range nns {
+		if nn == nil {
+			continue
+		}
+
 		buf = append(buf, nn.Text())
 		// make node recyclable to gc
 		nn.Isolate()
@@ -287,11 +295,24 @@ func (n *Node) Text() string {
 	}
 	return n.text
 }
-func (n *Node) TidiedText() string {
+
+func (n *Node) debugText(limit ...int) string {
 	if n == nil {
 		return ""
 	}
-	return printTidy(n.text)
+
+	buf := strings.Builder{}
+	count := 1
+	if len(limit) != 0 {
+		count = limit[0]
+	}
+
+	n.IterNext(func(n *Node) bool {
+		buf.WriteString(printTidy(n.Text()))
+		count--
+		return count != 0
+	})
+	return buf.String()
 }
 
 func (n *Node) SetText(text string) {
@@ -306,14 +327,25 @@ func (n *Node) Print() {
 		println("\t", "<nil>")
 	}
 
-	println("\t", n.Line()+1, "....", printTidy(n.Text()), " ....", "*Node."+n.Kind().String())
+	println("\t", n.Line()+1, "....", printTidy(n.Text()), "....", "*Node."+n.Kind().String())
 	// println("\t", n.Line()+1, " ....", "*Node."+n.Kind().String(), "....", printTidy(n.Text()))
 }
 
-func (n *Node) PrintAllNext() {
+func (n *Node) PrintIter(limit ...int) {
+	var (
+		count    int
+		hasLimit bool
+	)
+	if len(limit) != 0 {
+		count = limit[0]
+		hasLimit = true
+	}
 	n.IterNext(func(n *Node) bool {
 		n.Print()
-		return true
+		if hasLimit {
+			count--
+		}
+		return !(hasLimit && count == 0)
 	})
 }
 
@@ -348,7 +380,7 @@ func (n *Node) skipNestNext(nestLeft, nestRight Kind, hooks ...func(*Node)) *Nod
 	count := 1
 	if n.Kind() == nestLeft {
 		handleHook(n, hooks...)
-		n = n.Next() // skip first nestLeft
+		n = n.findNext([]Kind{nestLeft}, findNodeOption{}, hooks...).Next() // skip first nestLeft
 	}
 
 	return n.IterNext(func(n *Node) bool {
@@ -369,16 +401,20 @@ func (n *Node) skipNestNext(nestLeft, nestRight Kind, hooks ...func(*Node)) *Nod
 
 // findNext helper
 func (n *Node) findNext(
-	target set[Kind],
+	target []Kind,
 	opt findNodeOption,
+	hooks ...func(*Node),
 ) *Node {
 	var (
 		parenthesisLeftCount   int
 		curlyBracketLeftCount  int
 		squareBracketLeftCount int
+
+		targetKindSet = newSet(target...)
 	)
 
 	return n.IterNext(func(n *Node) bool {
+		handleHook(n, hooks...)
 		switch n.Kind() {
 		case KindParenthesisLeft:
 			parenthesisLeftCount++
@@ -418,11 +454,11 @@ func (n *Node) findNext(
 			return true
 		}
 
-		if target.Contain(n.Kind()) {
+		if targetKindSet.Contain(n.Kind()) {
 			return opt.TargetReverse
 		}
 
-		return true
+		return !opt.TargetReverse
 	})
 }
 

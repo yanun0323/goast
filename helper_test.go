@@ -70,5 +70,5 @@ func TestPrintTidy(t *testing.T) {
 	a := NewAssert(t)
 
 	s := "\n \n \n\t\r"
-	a.Equal(printTidy(s), "\\n\\s\\n\\s\\n\\t\\r")
+	a.Equal(printTidy(s), "\\n·\\n·\\n -> ·")
 }

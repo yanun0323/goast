@@ -57,8 +57,24 @@ func hasSuffix(s []byte, suffix string) bool {
 
 func printTidy(s string) string {
 	s = strings.ReplaceAll(s, "\n", "\\n")
-	s = strings.ReplaceAll(s, "\t", "\\t")
-	s = strings.ReplaceAll(s, "\r", "\\r")
-	s = strings.ReplaceAll(s, " ", "\\s")
+	s = strings.ReplaceAll(s, "\r", "·")
+	s = strings.ReplaceAll(s, " ", "·")
+	s = strings.ReplaceAll(s, "\t", " -> ")
 	return s
+}
+
+func appendUnrepeatable[Type comparable](slice []Type, elems ...Type) []Type {
+	if len(elems) == 0 {
+		return slice
+	}
+
+	if len(slice) == 0 {
+		return elems
+	}
+
+	if slice[len(slice)-1] == elems[0] {
+		elems = elems[1:]
+	}
+
+	return append(slice, elems...)
 }

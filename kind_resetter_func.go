@@ -23,25 +23,27 @@ type funcResetter struct {
 	isInterfaceDefinition bool
 }
 
-func (r funcResetter) Run(head *Node, _ ...func(*Node)) *Node {
+func (r funcResetter) Run(head *Node, hooks ...func(*Node)) *Node {
 	if r.isParameter {
-		return r.handleParameterFunc(head)
+		return r.handleParameterFunc(head, hooks...)
 	}
 
 	if r.isInterfaceDefinition {
-		return r.handleGeneralFunc(head)
+		return r.handleGeneralFunc(head, []Kind{KindNewLine}, hooks...)
 	}
 
 	if r.isTemporaryFunc(head) {
-		return r.handleGeneralFunc(head)
+		return r.handleGeneralFunc(head, []Kind{KindNewLine}, hooks...)
 	}
 
 	// handle func keyword leading
 	if r.isFuncKeywordLeading {
 		if head.Kind() != KindFunc {
+			handleHook(head, hooks...)
 			return head.Next()
 		}
 
+		handleHook(head, hooks...)
 		head = head.Next() // skip first 'func' keyword
 	}
 
@@ -53,6 +55,7 @@ func (r funcResetter) Run(head *Node, _ ...func(*Node)) *Node {
 	)
 
 	return head.IterNext(func(n *Node) bool {
+		handleHook(n, hooks...)
 		if skipAll {
 			return true
 		}
@@ -80,19 +83,24 @@ func (r funcResetter) Run(head *Node, _ ...func(*Node)) *Node {
 
 		if isMethod { // '('
 			isMethod = false
-			jumpTo = parenthesisResetter{isReceiver: true}.Run(n)
+			jumpTo = parenthesisResetter{isReceiver: true}.Run(n, hooks...)
 			skipAll = jumpTo == nil
 			return true
 		}
 
-		jumpTo = r.handleGeneralFunc(head)
-		skipAll = jumpTo == nil
-		return true
+		switch n.Kind() {
+		case KindNewLine: // return kind
+			return false
+		default:
+			jumpTo = r.handleGeneralFunc(head, []Kind{KindNewLine}, hooks...)
+			skipAll = jumpTo == nil
+			return true
+		}
 	})
 }
 
 // handleTemporaryFunc starts with 'func' or next of 'func'
-func (r funcResetter) handleGeneralFunc(head *Node, returnKinds ...Kind) *Node {
+func (r funcResetter) handleGeneralFunc(head *Node, returnKinds []Kind, hooks ...func(*Node)) *Node {
 	var (
 		skipAll bool
 		jumpTo  *Node
@@ -109,10 +117,12 @@ func (r funcResetter) handleGeneralFunc(head *Node, returnKinds ...Kind) *Node {
 	}
 
 	if head.Kind() == KindFunc {
+		handleHook(head, hooks...)
 		head = head.Next() // skip first 'func'
 	}
 
 	return head.IterNext(func(n *Node) bool {
+		handleHook(n, hooks...)
 		if skipAll {
 			return true
 		}
@@ -140,23 +150,23 @@ func (r funcResetter) handleGeneralFunc(head *Node, returnKinds ...Kind) *Node {
 			return true
 		case KindSpace:
 			if isFuncParamHandled {
-				jumpTo = r.handleSingleReturnType(n)
+				jumpTo = r.handleSingleReturnType(n, hooks...)
 				skipAll = jumpTo == nil
 				return true
 			}
 			return true
 		case KindParenthesisLeft:
 			isFuncParamHandled = true
-			jumpTo = parenthesisResetter{}.Run(n)
+			jumpTo = parenthesisResetter{}.Run(n, hooks...)
 			skipAll = jumpTo == nil
 			return true
 		case KindCurlyBracketLeft:
-			jumpTo = curlyBracketResetter{}.Run(n)
+			jumpTo = curlyBracketResetter{}.Run(n, hooks...)
 			skipAll = jumpTo == nil
 			return true
 		case KindSquareBracketLeft:
 			isFuncParamHandled = true
-			jumpTo = squareBracketResetter{}.Run(n)
+			jumpTo = squareBracketResetter{}.Run(n, hooks...)
 			skipAll = jumpTo == nil
 			return true
 		default:
@@ -168,7 +178,7 @@ func (r funcResetter) handleGeneralFunc(head *Node, returnKinds ...Kind) *Node {
 // isTemporaryFunc starts with 'func' or next of 'func'
 func (r funcResetter) isTemporaryFunc(head *Node) bool {
 	found := head.findNext(
-		newSet(KindNewLine, KindCurlyBracketRight),
+		[]Kind{KindNewLine, KindCurlyBracketRight},
 		findNodeOption{
 			IsOutsideParenthesis:   true,
 			IsOutsideCurlyBracket:  true,
@@ -184,29 +194,36 @@ func (r funcResetter) isTemporaryFunc(head *Node) bool {
 }
 
 // handleParameterFunc starts with 'func'
-func (r funcResetter) handleParameterFunc(head *Node) *Node {
-	n := r.handleGeneralFunc(head, KindComma, KindParenthesisRight)
+func (r funcResetter) handleParameterFunc(head *Node, hooks ...func(*Node)) *Node {
+	n := r.handleGeneralFunc(head, []Kind{KindComma, KindParenthesisRight}, hooks...)
 	if n.Kind() == KindParenthesisRight {
+		handleHook(n, hooks...)
 		return n.Next()
 	}
 	return n
 }
 
 // handleSingleReturnType starts with ' '
-func (r funcResetter) handleSingleReturnType(head *Node) *Node {
+func (r funcResetter) handleSingleReturnType(head *Node, hooks ...func(*Node)) *Node {
+	println("handleSingleReturnType:", head.debugText(4))
 	if head.Kind() != KindSpace {
+		handleHook(head, hooks...)
 		return head.Next()
 	}
 
 	head = head.Next() // skip first space
 
-	found := head.findNext(newSet(KindComment), findNodeOption{TargetReverse: true})
+	found := head.findNext([]Kind{KindComment}, findNodeOption{TargetReverse: true}, hooks...)
+	println("\t", "found:", found.debugText(), found.Kind().String())
 	switch found.Kind() {
 	case KindParenthesisLeft:
-		return parenthesisResetter{}.Run(head)
+		println("\t", "KindParenthesisLeft")
+		return parenthesisResetter{}.Run(head, hooks...)
 	case KindFunc:
-		return r.handleParameterFunc(head)
+		println("\t", "KindFunc")
+		return r.handleParameterFunc(head, hooks...)
 	}
+	println("\t", "Others")
 
 	var (
 		buf []*Node
@@ -222,13 +239,14 @@ func (r funcResetter) handleSingleReturnType(head *Node) *Node {
 	}()
 
 	return head.IterNext(func(n *Node) bool {
+		handleHook(n, hooks...)
 		switch n.Kind() {
 		case KindNewLine, KindSpace: // return kind
 			return false
 		case KindComment:
 			return true
 		default:
-			buf = append(buf, n)
+			buf = appendUnrepeatable(buf, n)
 			return true
 		}
 	})

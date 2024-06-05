@@ -99,19 +99,20 @@ func (r scopeResetter) Reset(s Scope) {
 	case ScopeImport:
 	case ScopeVariable:
 	case ScopeConst:
-	case ScopeType:
-	case ScopeFunc:
+	// case ScopeType:
+	// case ScopeFunc:
 	default:
 
 	}
 }
 
 type paramResetter struct {
+	skip        bool
 	resetKind   Kind
 	returnKinds []Kind
 }
 
-func (r paramResetter) Run(head *Node, _ ...func(*Node)) *Node {
+func (r paramResetter) Run(head *Node, hooks ...func(*Node)) *Node {
 	var (
 		skipAll bool
 		jumpTo  *Node
@@ -119,6 +120,7 @@ func (r paramResetter) Run(head *Node, _ ...func(*Node)) *Node {
 	)
 
 	if len(r.returnKinds) == 0 {
+		handleHook(head, hooks...)
 		return head.Next()
 	}
 
@@ -134,6 +136,7 @@ func (r paramResetter) Run(head *Node, _ ...func(*Node)) *Node {
 	}()
 
 	return head.IterNext(func(n *Node) bool {
+		handleHook(n, hooks...)
 		if skipAll {
 			return true
 		}
@@ -149,26 +152,36 @@ func (r paramResetter) Run(head *Node, _ ...func(*Node)) *Node {
 			return false
 		}
 
+		hooksCopy := make([]func(*Node), len(hooks))
+		copy(hooksCopy, hooks)
+		appendedHooks := append(hooksCopy, func(nn *Node) {
+			buf = appendUnrepeatable(buf, nn)
+		})
+
 		switch n.Kind() {
 		case KindParenthesisLeft:
-			jumpTo = parenthesisResetter{}.Run(n)
+			jumpTo = parenthesisResetter{skip: r.skip}.Run(n, appendedHooks...)
 			skipAll = jumpTo == nil
 			return true
 		case KindCurlyBracketLeft:
-			jumpTo = curlyBracketResetter{}.Run(n)
+			jumpTo = curlyBracketResetter{skip: r.skip}.Run(n, appendedHooks...)
 			skipAll = jumpTo == nil
 			return true
 		case KindSquareBracketLeft:
-			jumpTo = squareBracketResetter{}.Run(n)
+			jumpTo = squareBracketResetter{skip: r.skip}.Run(n, appendedHooks...)
 			skipAll = jumpTo == nil
 			return true
 		case KindFunc:
-			jumpTo = funcResetter{isParameter: true}.Run(n)
+			jumpTo = funcResetter{isFuncKeywordLeading: true}.Run(n, hooks...)
 			skipAll = jumpTo == nil
 			return true
 		case KindComment:
 			return true
 		default:
+			if !r.skip {
+				buf = appendUnrepeatable(buf, n)
+			}
+
 			return true
 		}
 	})
