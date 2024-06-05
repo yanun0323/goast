@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/yanun0323/goast/assert"
+	"github.com/yanun0323/goast/charset"
 )
 
 func TestTrie(t *testing.T) {
@@ -63,7 +64,7 @@ func TestTrieComment(t *testing.T) {
 func TestTrieFindReversely(t *testing.T) {
 	a := assert.New(t)
 
-	tr := newTrie(newCharset("123"))
+	tr := newTrie(charset.New("123"))
 	_, ok := tr.FindText("123")
 	a.Require(ok, "find 123")
 

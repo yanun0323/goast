@@ -4,6 +4,7 @@ import (
 	"errors"
 	"strings"
 
+	"github.com/yanun0323/goast/charset"
 	"github.com/yanun0323/goast/helper"
 )
 
@@ -25,21 +26,21 @@ func extract(text []byte) (*Node, error) {
 
 var (
 	_commonExtractor = &extractor{
-		SeparatorCharset:  _separatorCharset,
+		SeparatorCharset:  charset.SeparatorCharset,
 		ReturnKeyword:     "",
 		SkipReturnKeyword: "",
 	}
 
 	_parenthesisExtractor = &extractor{
 		kind:              KindKeyword,
-		SeparatorCharset:  _separatorCharset,
+		SeparatorCharset:  charset.SeparatorCharset,
 		ReturnKeyword:     ")",
 		SkipReturnKeyword: "",
 	}
 
 	_curlyBracketExtractor = &extractor{
 		kind:              KindKeyword,
-		SeparatorCharset:  _separatorCharset,
+		SeparatorCharset:  charset.SeparatorCharset,
 		ReturnKeyword:     "}",
 		SkipReturnKeyword: "",
 	}
@@ -113,7 +114,7 @@ type extractor struct {
 	kind              Kind
 	IncludeOpen       bool
 	IncludeClose      bool
-	SeparatorCharset  charset[byte]
+	SeparatorCharset  charset.Set[byte]
 	ReturnKeyword     string
 	SkipReturnKeyword string
 }

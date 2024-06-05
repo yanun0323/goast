@@ -1,6 +1,9 @@
 package goast
 
-import "github.com/yanun0323/goast/helper"
+import (
+	"github.com/yanun0323/goast/charset"
+	"github.com/yanun0323/goast/helper"
+)
 
 type Kind [2]string
 
@@ -133,7 +136,7 @@ func NewKind(s string) Kind {
 		return KindPackage
 	}
 
-	if len(s) == 1 && _separatorCharset.Contain(s[0]) {
+	if len(s) == 1 && charset.SeparatorCharset.Contain(s[0]) {
 		return KindSeparator
 	}
 
@@ -141,15 +144,15 @@ func NewKind(s string) Kind {
 		return KindString
 	}
 
-	if _golangKeywords.Contain(s) {
+	if charset.GolangKeywords.Contain(s) {
 		return KindKeyword
 	}
 
-	if _golangBasicType.Contain(s) {
+	if charset.GolangBasicType.Contain(s) {
 		return KindBasic
 	}
 
-	if _golangSymbol.Contain(s) {
+	if charset.GolangSymbol.Contain(s) {
 		return KindSymbol
 	}
 

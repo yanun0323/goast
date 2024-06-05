@@ -1,8 +1,8 @@
 package charset
 
-type charset[T comparable] map[T]struct{}
+type Set[T comparable] map[T]struct{}
 
-func (cs charset[T]) Contain(key T) bool {
+func (cs Set[T]) Contain(key T) bool {
 	if cs == nil {
 		return false
 	}
@@ -10,8 +10,8 @@ func (cs charset[T]) Contain(key T) bool {
 	return ok
 }
 
-func NewCharset[T comparable](chars ...T) charset[T] {
-	set := make(charset[T], len(chars))
+func New[T comparable](chars ...T) Set[T] {
+	set := make(Set[T], len(chars))
 	for _, char := range chars {
 		set[char] = struct{}{}
 	}
@@ -19,11 +19,11 @@ func NewCharset[T comparable](chars ...T) charset[T] {
 }
 
 var (
-	SeparatorCharset = NewCharset[byte](
+	SeparatorCharset = New[byte](
 		' ', '[', ']', '(', ')', '{', '}', ',', ':', ';', '\n', '\t', '\r',
 	)
 
-	GolangKeywords = NewCharset(
+	GolangKeywords = New(
 		"break",
 		"default",
 		"func",
@@ -51,7 +51,7 @@ var (
 		"var",
 	)
 
-	GolangSymbol = NewCharset(
+	GolangSymbol = New(
 		"+",
 		"&",
 		"+=",
@@ -102,7 +102,7 @@ var (
 		"~",
 	)
 
-	GolangBasicType = NewCharset(
+	GolangBasicType = New(
 		"bool",
 		"string",
 		"byte",
