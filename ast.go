@@ -37,9 +37,8 @@ func ParseAst(file string) (Ast, error) {
 		return nil, err
 	}
 
-	generalResetter().Run(node)
-
 	scs := []Scope{}
+	nodesToReset := []*Node{}
 
 	head := node
 	k := scope.Unknown
@@ -47,6 +46,7 @@ func ParseAst(file string) (Ast, error) {
 
 	tryAppendScope := func() {
 		if k != scope.Unknown {
+			nodesToReset = append(nodesToReset, head)
 			scs = append(scs, NewScope(
 				head.Line(),
 				k,
@@ -78,6 +78,10 @@ func ParseAst(file string) (Ast, error) {
 	})
 
 	tryAppendScope()
+
+	for _, n := range nodesToReset {
+		resetKind(n)
+	}
 
 	if _, err := findPackageName(scs); err != nil {
 		return nil, err

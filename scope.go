@@ -44,10 +44,10 @@ type scopeStruct struct {
 
 func (d *scopeStruct) Line() int {
 	if d == nil {
-		return 0
+		return -1
 	}
 
-	return d.line
+	return d.line + 1
 }
 
 func (d *scopeStruct) Kind() scope.Kind {

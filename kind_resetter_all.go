@@ -6,8 +6,14 @@ import (
 	"github.com/yanun0323/goast/kind"
 )
 
-func kindReset(n *Node) *Node {
-	return generalResetter().Run(n)
+func resetKind(n *Node) *Node {
+	switch n.Kind() {
+	case kind.Func:
+		return funcResetter{isFuncKeywordLeading: true}.Run(n)
+	case kind.Type:
+		return typeResetter{}.Run(n)
+	}
+	return nil
 }
 
 type kindResetter interface {
@@ -20,82 +26,84 @@ func handleHook(n *Node, hooks ...func(*Node)) {
 	}
 }
 
-func generalResetter() kindResetter {
-	return &genericResetter{
-		DeeperResetterTable: map[kind.Kind]kindResetter{
-			kind.Func: funcResetter{isFuncKeywordLeading: true},
-		},
-	}
-}
+// func generalResetter() kindResetter {
+// 	return &genericResetter{
+// 		DeeperResetterTable: map[kind.Kind]kindResetter{
+// 			kind.Func: funcResetter{isFuncKeywordLeading: true},
+// 			kind.Type: typeResetter{},
+// 			kind.
+// 		},
+// 	}
+// }
 
 // genericResetter stands for COMMON genericResetter
-type genericResetter struct {
-	TriggerKind         charset.Set[kind.Kind]
-	TriggerLimit        int
-	KindChangeTable     map[int]kind.Kind
-	ChangeableKind      charset.Set[kind.Kind]
-	ReturnKind          charset.Set[kind.Kind]
-	DeeperResetterTable map[kind.Kind]kindResetter
-}
+// type genericResetter struct {
+// 	TriggerKind         charset.Set[kind.Kind]
+// 	TriggerLimit        int
+// 	KindChangeTable     map[int]kind.Kind
+// 	ChangeableKind      charset.Set[kind.Kind]
+// 	ReturnKind          charset.Set[kind.Kind]
+// 	DeeperResetterTable map[kind.Kind]kindResetter
+// }
 
-func (r genericResetter) Run(head *Node, _ ...func(*Node)) *Node {
-	helper.DebugPrint("genericResetter.Run", "\t\t....", head.DebugText(5))
-	defer helper.DebugPrint("genericResetter.Run.Returned")
+// func (r genericResetter) Run(head *Node, _ ...func(*Node)) *Node {
+// 	helper.DebugPrint("genericResetter.Run", "\t\t....", head.DebugText(5))
+// 	defer helper.DebugPrint("genericResetter.Run.Returned")
 
-	var (
-		skipAll      bool
-		jumpTo       *Node
-		triggered    bool
-		triggerIndex int
+// 	var (
+// 		skipAll      bool
+// 		jumpTo       *Node
+// 		triggered    bool
+// 		triggerIndex int
 
-		triggerLimit = r.TriggerLimit
-	)
+// 		triggerLimit = r.TriggerLimit
+// 	)
 
-	return head.IterNext(func(n *Node) bool {
-		if skipAll {
-			return true
-		}
+// 	return head.IterNext(func(n *Node) bool {
+// 		if skipAll {
+// 			return true
+// 		}
 
-		if jumpTo != nil {
-			if jumpTo != n {
-				return true
-			}
-			jumpTo = nil
-		}
+// 		if jumpTo != nil {
+// 			if jumpTo != n {
+// 				return true
+// 			}
+// 			jumpTo = nil
+// 		}
 
-		//  ReturnKind > deeperResetter > TriggerKind > ChangeableKind > UnchangeableKind
-		if r.ReturnKind.Contain(n.Kind()) {
-			return false
-		}
+// 		//  ReturnKind > deeperResetter > TriggerKind > ChangeableKind > UnchangeableKind
+// 		if r.ReturnKind.Contain(n.Kind()) {
+// 			return false
+// 		}
 
-		if resetter, ok := r.DeeperResetterTable[n.Kind()]; ok && resetter != nil {
-			jumpTo = resetter.Run(n)
-			skipAll = jumpTo == nil
-			return true
-		}
+// 		if resetter, ok := r.DeeperResetterTable[n.Kind()]; ok && resetter != nil {
+// 			jumpTo = resetter.Run(n)
+// 			skipAll = jumpTo == nil
+// 			return true
+// 		}
 
-		if r.TriggerKind.Contain(n.Kind()) {
-			triggered = true
-			triggerIndex = 0
-			return true
-		}
+// 		if r.TriggerKind.Contain(n.Kind()) {
+// 			triggered = true
+// 			triggerIndex = 0
+// 			return true
+// 		}
 
-		if triggerLimit == 0 || !triggered || !r.ChangeableKind.Contain(n.Kind()) {
-			return true
-		}
+// 		if triggerLimit == 0 || !triggered || !r.ChangeableKind.Contain(n.Kind()) {
+// 			return true
+// 		}
 
-		triggerIndex++
-		if triggerLimit > 0 {
-			triggerLimit--
-		}
+// 		triggerIndex++
+// 		if triggerLimit > 0 {
+// 			triggerLimit--
+// 		}
 
-		if k, ok := r.KindChangeTable[triggerIndex]; ok && k != kind.None {
-			n.SetKind(k)
-		}
+// 		if k, ok := r.KindChangeTable[triggerIndex]; ok && k != kind.None {
+// 			n.SetKind(k)
+// 		}
 
-		return true
-	})
-}
+// 		return true
+// 	})
+// }
 
 type paramResetter struct {
 	skip        bool

@@ -40,16 +40,43 @@ func TestExample(t *testing.T) {
 	})
 
 	ast = ast.SetScope(sc)
-	ast.IterScope(func(s goast.Scope) bool {
-		s.Node().IterNext(func(n *goast.Node) bool {
-			n.Print()
-			return true
-		})
-		return true
-	})
+	// ast.IterScope(func(s goast.Scope) bool {
+	// 	s.Node().IterNext(func(n *goast.Node) bool {
+	// 		n.Print()
+	// 		return true
+	// 	})
+	// 	return true
+	// })
 
 	s := "output/save_test"
 	if err := ast.Save(s); err != nil {
 		t.Fatalf("save ast to file: %s, err: %+v", f, err)
 	}
+}
+
+func TestUsecase(t *testing.T) {
+	f := "usecase_test.go"
+	ast, err := goast.ParseAst(f)
+	if err != nil {
+		t.Fatalf("parse ast from file: %s, err: %+v", f, err)
+	}
+
+	ast.IterScope(func(s goast.Scope) bool {
+		print(s.Line())
+		s.Node().DebugPrint(10)
+		if s.Line() != 11 {
+			return true
+		}
+		// s.Node().IterNext(func(n *goast.Node) bool {
+		// 	n.Print()
+		// 	if n.Kind() == kind.TypeName {
+		// 	}
+		// 	return true
+		// })
+		// if name, ok := s.GetTypeName(); ok && name == "MemberUseCase" {
+		// 	s.Node().DebugPrint()
+		// 	return false
+		// }
+		return true
+	})
 }

@@ -17,7 +17,7 @@ func TestCommonResetter(t *testing.T) {
 	head, err := extract([]byte(text))
 	a.NoError(err, fmt.Sprintf("extract text, err: %s", err))
 
-	tail := kindReset(head)
+	tail := resetKind(head)
 	_ = head.IterNext(func(n *Node) bool {
 		switch n.Text() {
 		case "Hello":

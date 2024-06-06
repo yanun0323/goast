@@ -5,7 +5,6 @@ import (
 	"testing"
 
 	"github.com/yanun0323/goast/assert"
-	"github.com/yanun0323/goast/helper"
 	"github.com/yanun0323/goast/kind"
 )
 
@@ -60,10 +59,6 @@ func TestStructResetter(t *testing.T) {
 			/* 000 */) /* comment */
 		}`
 
-	println()
-	println("TestStructResetter:")
-	helper.SetDebug(true)
-	defer helper.SetDebug(false)
 	structNode, err := extract([]byte(structText))
 	a.NoError(err, "extract struct text should be no error")
 
