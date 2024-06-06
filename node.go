@@ -21,6 +21,22 @@ func NewNode(line int, text string, kinds ...kind.Kind) *Node {
 	return &Node{line: line, kind: kind.New(text), text: text}
 }
 
+func NewNodes(line int, texts ...string) *Node {
+	if len(texts) == 0 {
+		return nil
+	}
+
+	head := NewNode(line, texts[0])
+	cur := head
+	for _, text := range texts[1:] {
+		cur.InsertNext(NewNode(line, text))
+		cur = cur.Next()
+		line += strings.Count(text, "\n")
+	}
+
+	return head
+}
+
 type Node struct {
 	line int
 	kind kind.Kind
