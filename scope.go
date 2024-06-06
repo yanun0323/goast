@@ -4,6 +4,7 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/yanun0323/goast/kind"
 	"github.com/yanun0323/goast/scope"
 )
 
@@ -18,6 +19,13 @@ type Scope interface {
 	Print()
 	Node() *Node
 	Text() string
+
+	GetTypeName() (string, bool)
+	GetStructName() (string, bool)
+	GetInterfaceName() (string, bool)
+	GetFuncName() (string, bool)
+	GetMethodName() (string, bool)
+	GetMethodReceiver() (string, bool)
 }
 
 func NewScope(line int, kind scope.Kind, node *Node) Scope {
@@ -120,4 +128,118 @@ func isScopeKind(s string, k scope.Kind) bool {
 	}
 
 	return s[:len(ks)] == ks
+}
+
+func (d *scopeStruct) GetFuncName() (string, bool) {
+	if d.Kind() != scope.Func {
+		return "", false
+	}
+
+	var (
+		name  string
+		found bool
+	)
+
+	d.Node().IterNext(func(n *Node) bool {
+		if n.Kind() == kind.FuncName {
+			name = n.Text()
+			found = true
+			return false
+		}
+
+		return true
+	})
+
+	return name, found
+}
+
+func (d *scopeStruct) GetTypeName() (string, bool) {
+	if d.Kind() != scope.Type {
+		return "", false
+	}
+
+	var (
+		name  string
+		found bool
+	)
+
+	d.Node().IterNext(func(n *Node) bool {
+		found = n.Kind() == kind.TypeName
+		name = n.Text()
+		return !found
+	})
+
+	return name, found
+}
+
+func (d *scopeStruct) GetStructName() (string, bool) {
+	if d.Kind() != scope.Type {
+		return "", false
+	}
+
+	isStruct := false
+
+	d.Node().IterNext(func(n *Node) bool {
+		isStruct = n.Kind() == kind.Struct
+		return !isStruct
+	})
+
+	return d.GetTypeName()
+}
+
+func (d *scopeStruct) GetInterfaceName() (string, bool) {
+	if d.Kind() != scope.Type {
+		return "", false
+	}
+
+	isInterface := false
+
+	d.Node().IterNext(func(n *Node) bool {
+		isInterface = n.Kind() == kind.Interface
+		return !isInterface
+	})
+
+	return d.GetTypeName()
+}
+
+func (d *scopeStruct) GetMethodName() (string, bool) {
+	if d.Kind() != scope.Func {
+		return "", false
+	}
+
+	var (
+		name  string
+		found bool
+	)
+
+	if _, isMethod := d.GetMethodReceiver(); !isMethod {
+		return "", false
+	}
+
+	d.Node().IterNext(func(n *Node) bool {
+		found = n.Kind() == kind.FuncName
+		name = n.Text()
+		return !found
+	})
+
+	return name, found
+}
+
+func (d *scopeStruct) GetMethodReceiver() (string, bool) {
+	if d.Kind() != scope.Func {
+		return "", false
+	}
+
+	var (
+		name  string
+		found bool
+	)
+
+	d.Node().IterNext(func(n *Node) bool {
+		found = n.Kind() == kind.MethodReceiverType
+		name = n.Text()
+		return !found
+	})
+
+	return name, found
 }
