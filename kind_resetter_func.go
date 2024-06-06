@@ -27,9 +27,13 @@ type funcResetter struct {
 	isParameter           bool
 	isFuncKeywordLeading  bool
 	isInterfaceDefinition bool
+	isNotMethod           bool
 }
 
 func (r funcResetter) Run(head *Node, hooks ...func(*Node)) *Node {
+	helper.DebugPrint("funcResetter.Run", "\t\t....", head.DebugText(5))
+	defer helper.DebugPrint("funcResetter.Run.Returned")
+
 	if r.isParameter {
 		return r.handleParameterFunc(head, hooks...)
 	}
@@ -59,6 +63,11 @@ func (r funcResetter) Run(head *Node, hooks ...func(*Node)) *Node {
 		skipAll           bool
 		jumpTo            *Node
 	)
+
+	if r.isNotMethod {
+		foundFuncOrMethod = true
+		isMethod = false
+	}
 
 	return head.IterNext(func(n *Node) bool {
 		handleHook(n, hooks...)
@@ -107,6 +116,9 @@ func (r funcResetter) Run(head *Node, hooks ...func(*Node)) *Node {
 
 // handleTemporaryFunc starts with 'func' or next of 'func'
 func (r funcResetter) handleGeneralFunc(head *Node, returnKinds []kind.Kind, hooks ...func(*Node)) *Node {
+	helper.DebugPrint("funcResetter.handleGeneralFunc", "\t\t....", head.DebugText(5))
+	defer helper.DebugPrint("funcResetter.handleGeneralFunc.Returned")
+
 	var (
 		skipAll bool
 		jumpTo  *Node
@@ -201,7 +213,10 @@ func (r funcResetter) isTemporaryFunc(head *Node) bool {
 
 // handleParameterFunc starts with 'func'
 func (r funcResetter) handleParameterFunc(head *Node, hooks ...func(*Node)) *Node {
-	n := r.handleGeneralFunc(head, []kind.Kind{kind.Comma, kind.ParenthesisRight}, hooks...)
+	helper.DebugPrint("funcResetter.handleParameterFunc", "\t\t....", head.DebugText(5))
+	defer helper.DebugPrint("funcResetter.handleParameterFunc.Returned")
+
+	n := r.handleGeneralFunc(head, []kind.Kind{kind.Comma, kind.ParenthesisRight, kind.NewLine}, hooks...)
 	if n.Kind() == kind.ParenthesisRight {
 		handleHook(n, hooks...)
 		return n.Next()
@@ -211,6 +226,9 @@ func (r funcResetter) handleParameterFunc(head *Node, hooks ...func(*Node)) *Nod
 
 // handleSingleReturnType starts with ' '
 func (r funcResetter) handleSingleReturnType(head *Node, hooks ...func(*Node)) *Node {
+	helper.DebugPrint("funcResetter.handleSingleReturnType", "\t\t....", head.DebugText(5))
+	defer helper.DebugPrint("funcResetter.handleSingleReturnType.Returned")
+
 	if head.Kind() != kind.Space {
 		handleHook(head, hooks...)
 		return head.Next()

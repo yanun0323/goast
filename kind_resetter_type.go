@@ -1,6 +1,9 @@
 package goast
 
-import "github.com/yanun0323/goast/kind"
+import (
+	"github.com/yanun0323/goast/helper"
+	"github.com/yanun0323/goast/kind"
+)
 
 // typeResetter head should be 'type'
 //
@@ -8,16 +11,19 @@ import "github.com/yanun0323/goast/kind"
 type typeResetter struct{}
 
 func (r typeResetter) Run(head *Node, hooks ...func(*Node)) *Node {
+	helper.DebugPrint("typeResetter.Run", "\t\t....", head.DebugText(5))
+	defer helper.DebugPrint("typeResetter.Run.Returned")
+
 	if head.Kind() != kind.Type {
 		handleHook(head, hooks...)
 		return head.Next()
 	}
 
 	var (
-		isTypeNameAssigned bool
-		exception          bool
-		skipAll            bool
-		jumpTo             *Node
+		isTypeNameAssigned   bool
+		isSpaceAfterTypeName bool
+		skipAll              bool
+		jumpTo               *Node
 	)
 
 	return head.IterNext(func(n *Node) bool {
@@ -33,15 +39,6 @@ func (r typeResetter) Run(head *Node, hooks ...func(*Node)) *Node {
 			return true
 		}
 
-		if exception {
-			switch n.Kind() {
-			case kind.CurlyBracketRight, kind.NewLine: // return kind
-				return false
-			default:
-				return true
-			}
-		}
-
 		if !isTypeNameAssigned {
 			switch n.Kind() {
 			case kind.CurlyBracketRight, kind.NewLine: // return kind
@@ -49,9 +46,22 @@ func (r typeResetter) Run(head *Node, hooks ...func(*Node)) *Node {
 			case kind.Raw:
 				n.SetKind(kind.TypeName)
 				isTypeNameAssigned = true
+				return true
 			default:
 				return true
 			}
+		}
+
+		if !isSpaceAfterTypeName {
+			switch n.Kind() {
+			case kind.Space:
+				isSpaceAfterTypeName = true
+			case kind.SquareBracketLeft:
+				jumpTo = squareBracketResetter{skip: true}.Run(n, hooks...)
+				skipAll = jumpTo == nil
+				return true
+			}
+			return true
 		}
 
 		switch n.Kind() {
@@ -66,7 +76,7 @@ func (r typeResetter) Run(head *Node, hooks ...func(*Node)) *Node {
 			skipAll = jumpTo == nil
 			return true
 		case kind.Func:
-			jumpTo = funcResetter{isFuncKeywordLeading: true}.Run(n, hooks...)
+			jumpTo = funcResetter{isNotMethod: true}.Run(n, hooks...)
 			skipAll = jumpTo == nil
 			return true
 		case kind.Raw:
@@ -89,6 +99,9 @@ func (r typeResetter) Run(head *Node, hooks ...func(*Node)) *Node {
 type interfaceResetter struct{}
 
 func (r interfaceResetter) Run(head *Node, hooks ...func(*Node)) *Node {
+	helper.DebugPrint("interfaceResetter.Run", "\t\t....", head.DebugText(5))
+	defer helper.DebugPrint("interfaceResetter.Run.Returned")
+
 	var (
 		skipAll bool
 		jumpTo  *Node
@@ -129,6 +142,9 @@ func (r interfaceResetter) Run(head *Node, hooks ...func(*Node)) *Node {
 type structResetter struct{}
 
 func (r structResetter) Run(head *Node, hooks ...func(*Node)) *Node {
+	helper.DebugPrint("structResetter.Run", "\t\t....", head.DebugText(5))
+	defer helper.DebugPrint("structResetter.Run.Returned")
+
 	var (
 		skipAll bool
 		jumpTo  *Node
@@ -170,6 +186,9 @@ func (r structResetter) Run(head *Node, hooks ...func(*Node)) *Node {
 //
 //   - a, b, c struct{}
 func (r structResetter) handleStructRow(head *Node, hooks ...func(*Node)) *Node {
+	helper.DebugPrint("funcResetter.handleStructRow", "\t\t....", head.DebugText(5))
+	defer helper.DebugPrint("funcResetter.handleStructRow.Returned")
+	
 	var (
 		skipAll bool
 		jumpTo  *Node

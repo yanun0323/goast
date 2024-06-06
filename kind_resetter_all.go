@@ -39,6 +39,9 @@ type genericResetter struct {
 }
 
 func (r genericResetter) Run(head *Node, _ ...func(*Node)) *Node {
+	helper.DebugPrint("genericResetter.Run", "\t\t....", head.DebugText(5))
+	defer helper.DebugPrint("genericResetter.Run.Returned")
+
 	var (
 		skipAll      bool
 		jumpTo       *Node
@@ -101,6 +104,9 @@ type paramResetter struct {
 }
 
 func (r paramResetter) Run(head *Node, hooks ...func(*Node)) *Node {
+	helper.DebugPrint("paramResetter.Run", "\t\t....", head.DebugText(5))
+	defer helper.DebugPrint("paramResetter.Run.Returned")
+
 	var (
 		skipAll bool
 		jumpTo  *Node
@@ -160,7 +166,7 @@ func (r paramResetter) Run(head *Node, hooks ...func(*Node)) *Node {
 			skipAll = jumpTo == nil
 			return true
 		case kind.Func:
-			jumpTo = funcResetter{isFuncKeywordLeading: true}.Run(n, hooks...)
+			jumpTo = funcResetter{isNotMethod: true}.Run(n, hooks...)
 			skipAll = jumpTo == nil
 			return true
 		case kind.Comment:

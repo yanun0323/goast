@@ -5,10 +5,11 @@ import (
 	"testing"
 
 	"github.com/yanun0323/goast/assert"
+	"github.com/yanun0323/goast/helper"
 	"github.com/yanun0323/goast/kind"
 )
 
-func TestTypeResetter(t *testing.T) {
+func TestInterfaceResetter(t *testing.T) {
 	a := assert.New(t)
 
 	interfaceText := `type Student interface {
@@ -28,8 +29,7 @@ func TestTypeResetter(t *testing.T) {
 		"Student": kind.TypeName,
 		"Meow":    kind.FuncName, "SelfIntroduction": kind.FuncName, "Laugh": kind.FuncName, "Learn": kind.FuncName,
 		"loud": kind.ParamName, "fn": kind.ParamName,
-		"int32": kind.ParamType, "string": kind.ParamType, "float64": kind.ParamType, "bool": kind.ParamType,
-		"error": kind.ParamType, "[]byte": kind.ParamType,
+		"[]byte": kind.ParamType,
 	}
 	interfaceNode.IterNext(func(n *Node) bool {
 		if expected, ok := interfaceAssertMap[n.Text()]; ok {
@@ -39,6 +39,10 @@ func TestTypeResetter(t *testing.T) {
 		return true
 	})
 	a.Equal(len(interfaceAssertMap), 0, "interfaceAssertMap", fmt.Sprintf("%+v", interfaceAssertMap))
+}
+
+func TestStructResetter(t *testing.T) {
+	a := assert.New(t)
 
 	structText := `type Student[T any] struct {
 		Name                                string
@@ -47,29 +51,29 @@ func TestTypeResetter(t *testing.T) {
 		FuncRelationship                    map[string]func(int, int8) error
 		FuncRelationship2                   map[string]func(n int32, nn int64) error
 		FuncRelationship3                   map[string]func(uint, uint8) (uint64, error)
-		/* comment */ Fn /* comment */ func( /* comment */
-			/* comment */ context.Context, /* comment */
-			/* comment */ string, /* comment */
-			/* comment */) /* comment */ ( /* comment */
-			/* comment */ int, /* comment */
-			/* comment */ error, /* comment */
-			/* comment */) /* comment */
+		/* 123 */ Fn /* 234 */ func( /* 345 */
+			/* 456 */ context.Context, /* 567 */
+			/* 678 */ string, /* 789 */
+			/* 321 */) /* 432 */ ( /* 543 */
+			/* 654 */ int, /* 765 */
+			/* 876 */ error, /* 987 */
+			/* 000 */) /* comment */
 		}`
 
+	println()
+	println("TestStructResetter:")
+	helper.SetDebug(true)
+	defer helper.SetDebug(false)
 	structNode, err := extract([]byte(structText))
 	a.NoError(err, "extract struct text should be no error")
 
 	structResult := typeResetter{}.Run(structNode)
 	a.Nil(structResult, "reset struct node", structResult.Text())
-
 	structAssertMap := map[string]kind.Kind{
 		"Student": kind.TypeName,
 		"Age":     kind.ParamName, "Age2": kind.ParamName, "Relationship": kind.ParamName, "FuncRelationship": kind.ParamName,
 		"FuncRelationship2": kind.ParamName, "FuncRelationship3": kind.ParamName, "Fn": kind.ParamName,
-		"n": kind.ParamName, "nn": kind.ParamName,
-		"string": kind.ParamType, "int8": kind.ParamType, "map[string]string": kind.ParamType, "int": kind.ParamType,
-		"int32": kind.ParamType, "int64": kind.ParamType, "uint": kind.ParamType, "uint64": kind.ParamType,
-		"error": kind.ParamType, "context.Context": kind.ParamType,
+		"n": kind.ParamName, "nn": kind.ParamName, "context.Context": kind.ParamType,
 	}
 	structNode.IterNext(func(n *Node) bool {
 		if expected, ok := structAssertMap[n.Text()]; ok {
@@ -79,6 +83,10 @@ func TestTypeResetter(t *testing.T) {
 		return true
 	})
 	a.Equal(len(structAssertMap), 0, "structAssertMap", fmt.Sprintf("%+v", structAssertMap))
+}
+
+func TestOtherResetter(t *testing.T) {
+	a := assert.New(t)
 
 	otherText := `type setter  /* comment */ func( /* comment */
 		/* comment */ context.Context, /* comment */

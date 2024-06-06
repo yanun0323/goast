@@ -12,6 +12,9 @@ type parenthesisResetter struct {
 }
 
 func (r parenthesisResetter) Run(head *Node, hooks ...func(*Node)) *Node {
+	helper.DebugPrint("parenthesisResetter.Run", "\t\t....", head.DebugText(5))
+	defer helper.DebugPrint("parenthesisResetter.Run.Returned")
+
 	if r.skip {
 		return head.skipNestNext(kind.ParenthesisLeft, kind.ParenthesisRight, hooks...)
 	}
@@ -42,7 +45,7 @@ func (r parenthesisResetter) Run(head *Node, hooks ...func(*Node)) *Node {
 		switch n.Kind() {
 		case kind.ParenthesisRight: // return kind
 			return false
-		case kind.Comment, kind.Comma, kind.ParenthesisLeft, kind.Tab, kind.NewLine:
+		case kind.Comment, kind.Comma, kind.ParenthesisLeft, kind.Tab, kind.NewLine, kind.Space:
 			return true
 		default:
 			jumpTo = r.handleParenthesisParam(n, r.isReceiver, hooks...)
@@ -55,6 +58,72 @@ func (r parenthesisResetter) Run(head *Node, hooks ...func(*Node)) *Node {
 
 // handleParenthesisParam starts with next of '(' and ','
 func (r parenthesisResetter) handleParenthesisParam(head *Node, isReceiver bool, hooks ...func(*Node)) *Node {
+	helper.DebugPrint("parenthesisResetter.handleParenthesisParam", "\t\t....", head.DebugText(5))
+	defer helper.DebugPrint("parenthesisResetter.handleParenthesisParam.Returned")
+
+	var (
+		skipAll bool
+		jumpTo  *Node
+
+		firstRawHandled bool
+	)
+
+	nameKind := kind.ParamName
+	typeKind := kind.ParamType
+	if isReceiver {
+		nameKind = kind.MethodReceiverName
+		typeKind = kind.MethodReceiverType
+	}
+
+	return head.IterNext(func(n *Node) bool {
+		handleHook(n, hooks...)
+		if skipAll {
+			return true
+		}
+
+		if jumpTo != nil {
+			if n != jumpTo {
+				return true
+			}
+			jumpTo = nil
+		}
+
+		switch n.Kind() {
+		case kind.Comma, kind.ParenthesisRight: // return kind
+			return false
+		case kind.SquareBracketLeft: // ignore including generic
+			jumpTo = squareBracketResetter{}.Run(n, hooks...)
+			skipAll = jumpTo == nil
+			return true
+		case kind.Comment, kind.ParenthesisLeft, kind.Tab, kind.NewLine, kind.Space:
+			return true
+		case kind.Func:
+			jumpTo = funcResetter{isParameter: true}.Run(n, hooks...)
+			skipAll = jumpTo == nil
+			return true
+		case kind.Raw:
+			if !firstRawHandled {
+				if n.Next().Kind() == kind.Space {
+					n.SetKind(nameKind)
+				} else {
+					n.SetKind(typeKind)
+				}
+				firstRawHandled = true
+				return true
+			}
+			n.SetKind(typeKind)
+			return true
+		default:
+			return true
+		}
+	})
+}
+
+// handleParenthesisParam starts with next of '(' and ','
+func (r parenthesisResetter) handleParenthesisParamCombined(head *Node, isReceiver bool, hooks ...func(*Node)) *Node {
+	helper.DebugPrint("parenthesisResetter.handleParenthesisParamCombined", "\t\t....", head.DebugText(5))
+	defer helper.DebugPrint("parenthesisResetter.handleParenthesisParamCombined.Returned")
+
 	var (
 		skipAll          bool
 		jumpTo           *Node
@@ -133,6 +202,9 @@ type curlyBracketResetter struct {
 }
 
 func (r curlyBracketResetter) Run(head *Node, hooks ...func(*Node)) *Node {
+	helper.DebugPrint("curlyBracketResetter.Run", "\t\t....", head.DebugText(5))
+	defer helper.DebugPrint("curlyBracketResetter.Run.Returned")
+
 	if r.skip {
 		return head.skipNestNext(kind.CurlyBracketLeft, kind.CurlyBracketRight, hooks...)
 	}
@@ -147,6 +219,9 @@ type squareBracketResetter struct {
 }
 
 func (r squareBracketResetter) Run(head *Node, hooks ...func(*Node)) *Node {
+	helper.DebugPrint("squareBracketResetter.Run", "\t\t....", head.DebugText(5))
+	defer helper.DebugPrint("squareBracketResetter.Run.Returned")
+
 	if r.skip {
 		return head.skipNestNext(kind.SquareBracketLeft, kind.SquareBracketRight, hooks...)
 	}

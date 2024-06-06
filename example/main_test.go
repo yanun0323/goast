@@ -20,27 +20,33 @@ func TestExample(t *testing.T) {
 	ast.IterScope(func(s goast.Scope) bool {
 		switch s.Kind() {
 		case scope.Type, scope.Func, scope.Package, scope.Import:
-			sc = append(sc, s)
-
-			var prev *goast.Node
+			takePrev := false
 			s.Node().IterNext(func(n *goast.Node) bool {
-				if prev != nil {
-					n.ReplacePrev(prev)
-					prev = nil
+				if takePrev {
+					n.TakePrev()
+					takePrev = false
 				}
 
 				switch n.Kind() {
 				case kind.Comment:
-					prev = n.Prev()
+					takePrev = true
 				}
 
 				return true
 			})
+			sc = append(sc, s)
 		}
 		return true
 	})
 
 	ast = ast.SetScope(sc)
+	ast.IterScope(func(s goast.Scope) bool {
+		s.Node().IterNext(func(n *goast.Node) bool {
+			n.Print()
+			return true
+		})
+		return true
+	})
 
 	s := "output/save_test"
 	if err := ast.Save(s); err != nil {

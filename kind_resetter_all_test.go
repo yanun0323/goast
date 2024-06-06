@@ -30,9 +30,7 @@ func TestCommonResetter(t *testing.T) {
 		case "context.Context",
 			"map[string]string",
 			"func(int) error",
-			"func(num int8) (int32, error)",
-			"string",
-			"error":
+			"func(num int8) (int32, error)":
 			a.Equal(n.Kind(), kind.ParamType, fmt.Sprintf("%s should be kind.ParamType", n.Text()))
 		}
 

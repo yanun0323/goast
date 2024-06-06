@@ -6,8 +6,29 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"runtime/debug"
 	"strings"
 )
+
+var (
+	_debug bool
+)
+
+func SetDebug(debug bool) {
+	_debug = debug
+}
+
+func DebugPrint(args ...any) {
+	if _debug {
+		ss := strings.Split(string(debug.Stack()), "\n")
+		s := ""
+		if len(ss) >= 7 {
+			s = ss[6]
+		}
+		args = append(args, "\t", strings.Split(s, " ")[0])
+		fmt.Println(args...)
+	}
+}
 
 func ReadFile(file string) ([]byte, error) {
 	if !HasSuffix([]byte(file), ".go") {
