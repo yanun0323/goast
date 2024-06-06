@@ -40,55 +40,9 @@ func ParseAst(file string) (Ast, error) {
 		return nil, err
 	}
 
-	node, err := extract(data)
+	scs, err := ParseScope(0, data)
 	if err != nil {
 		return nil, err
-	}
-
-	scs := []Scope{}
-	nodesToReset := []*Node{}
-
-	head := node
-	k := scope.Unknown
-	line := -1
-
-	tryAppendScope := func() {
-		if k != scope.Unknown {
-			nodesToReset = append(nodesToReset, head)
-			scs = append(scs, NewScope(
-				head.Line(),
-				k,
-				head,
-			))
-		}
-
-		if head.Prev() != nil {
-			_ = head.RemovePrev()
-		}
-	}
-
-	_ = node.IterNext(func(n *Node) bool {
-		if n.Line() == line {
-			return true
-		}
-
-		line = n.Line()
-		nk := newScopeKind(n.Text())
-		if nk == scope.Unknown {
-			return true
-		}
-
-		tryAppendScope()
-
-		head = n
-		k = nk
-		return true
-	})
-
-	tryAppendScope()
-
-	for _, n := range nodesToReset {
-		resetKind(n)
 	}
 
 	if _, err := findPackageName(scs); err != nil {

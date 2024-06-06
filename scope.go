@@ -36,6 +36,61 @@ func NewScope(line int, kind scope.Kind, node *Node) Scope {
 	}
 }
 
+func ParseScope(startLine int, text []byte) ([]Scope, error) {
+	node, err := extract(text)
+	if err != nil {
+		return nil, err
+	}
+
+	scs := []Scope{}
+	nodesToReset := []*Node{}
+
+	head := node
+	k := scope.Unknown
+	line := startLine - 1
+
+	tryAppendScope := func() {
+		if k != scope.Unknown {
+			nodesToReset = append(nodesToReset, head)
+			scs = append(scs, NewScope(
+				head.Line(),
+				k,
+				head,
+			))
+		}
+
+		if head.Prev() != nil {
+			_ = head.RemovePrev()
+		}
+	}
+
+	_ = node.IterNext(func(n *Node) bool {
+		if n.Line() == line {
+			return true
+		}
+
+		line = n.Line()
+		nk := newScopeKind(n.Text())
+		if nk == scope.Unknown {
+			return true
+		}
+
+		tryAppendScope()
+
+		head = n
+		k = nk
+		return true
+	})
+
+	tryAppendScope()
+
+	for _, n := range nodesToReset {
+		resetKind(n)
+	}
+
+	return scs, nil
+}
+
 type scopeStruct struct {
 	line int
 	kind scope.Kind
