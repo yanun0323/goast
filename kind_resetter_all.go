@@ -16,9 +16,9 @@ func resetKind(n *Node) *Node {
 	return nil
 }
 
-type kindResetter interface {
-	Run(*Node, ...func(*Node)) *Node
-}
+// type kindResetter interface {
+// 	Run(*Node, ...func(*Node)) *Node
+// }
 
 func handleHook(n *Node, hooks ...func(*Node)) {
 	for _, hook := range hooks {

@@ -37,5 +37,5 @@ func TestCommonResetter(t *testing.T) {
 		return true
 	})
 
-	a.Require(tail == nil, "tail should be nil")
+	a.Equal(tail.Next(), nil, "tail should be nil")
 }

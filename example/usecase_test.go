@@ -11,7 +11,7 @@ import (
 type MemberUseCase interface {
 	Start(ctx context.Context, req *UpdatePhoneReq) (res *UpdatePhoneResp, err error)
 	End(ctx context.Context, req *UpdatePhoneReq) (*UpdatePhoneResp, error)
-	Exit(ctx context.Context)
+	Exit(ctx context.Context) error
 }
 
 var (

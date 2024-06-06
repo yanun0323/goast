@@ -62,21 +62,10 @@ func TestUsecase(t *testing.T) {
 	}
 
 	ast.IterScope(func(s goast.Scope) bool {
-		print(s.Line())
-		s.Node().DebugPrint(10)
 		if s.Line() != 11 {
 			return true
 		}
-		// s.Node().IterNext(func(n *goast.Node) bool {
-		// 	n.Print()
-		// 	if n.Kind() == kind.TypeName {
-		// 	}
-		// 	return true
-		// })
-		// if name, ok := s.GetTypeName(); ok && name == "MemberUseCase" {
-		// 	s.Node().DebugPrint()
-		// 	return false
-		// }
+		s.Node().DebugPrint()
 		return true
 	})
 }
