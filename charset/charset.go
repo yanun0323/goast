@@ -18,6 +18,16 @@ func New[T comparable](chars ...T) Set[T] {
 	return set
 }
 
+func NewSlice[T comparable](chars ...[]T) Set[T] {
+	set := make(Set[T], len(chars))
+	for i := range chars {
+		for _, char := range chars[i] {
+			set[char] = struct{}{}
+		}
+	}
+	return set
+}
+
 var (
 	SeparatorCharset = New[byte](
 		' ', '[', ']', '(', ')', '{', '}', ',', ':', ';', '\n', '\t', '\r',
@@ -55,55 +65,56 @@ var (
 		"var",
 	)
 
-	GolangSymbol = New(
-		"+",
-		"&",
-		"+=",
-		"&=",
-		"&&",
-		"==",
-		"!=",
-		"(",
-		")",
-		"-",
-		"|",
-		"-=",
-		"|=",
-		"||",
-		"<",
-		"<=",
-		"[",
-		"]",
-		"*",
-		"^",
-		"*=",
-		"^=",
-		"<-",
-		">",
-		">=",
-		"{",
-		"}",
-		"/",
-		"<<",
-		"/=",
-		"<<=",
-		"++",
-		"=",
-		":=",
-		",",
-		";",
-		"%",
-		">>",
-		"%=",
-		">>=",
-		"--",
-		"!",
-		"...",
-		".",
-		":",
-		"&^",
-		"&^=",
-		"~",
+	GolangSymbol = NewSlice[byte](
+		[]byte("+"),
+		[]byte("&"),
+		[]byte("+="),
+		[]byte("&="),
+		[]byte("&&"),
+		[]byte("=="),
+		[]byte("!="),
+		[]byte("("),
+		[]byte(")"),
+		[]byte("-"),
+		[]byte("|"),
+		[]byte("-="),
+		[]byte("|="),
+		[]byte("||"),
+		[]byte("<"),
+		[]byte("<="),
+		[]byte("["),
+		[]byte("]"),
+		[]byte("*"),
+		[]byte("^"),
+		[]byte("*="),
+		[]byte("^="),
+		[]byte("<-"),
+		[]byte(">"),
+		[]byte(">="),
+		[]byte("{"),
+		[]byte("}"),
+		[]byte("/"),
+		[]byte("<<"),
+		[]byte("/="),
+		[]byte("<<="),
+		[]byte("++"),
+		[]byte("="),
+		[]byte(":="),
+		[]byte(","),
+		[]byte(";"),
+		[]byte("%"),
+		[]byte(">>"),
+		[]byte("%="),
+		[]byte(">>="),
+		[]byte("--"),
+		[]byte("!"),
+		[]byte("..."),
+		[]byte("."),
+		[]byte(":"),
+		[]byte("&^"),
+		[]byte("&^="),
+		[]byte("~"),
+		[]byte("_"),
 	)
 
 	GolangBasicType = New(

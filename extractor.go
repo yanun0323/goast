@@ -30,14 +30,14 @@ var (
 	}
 
 	_parenthesisExtractor = &extractor{
-		kind:              kind.Keyword,
+		kind:              kind.Raw,
 		SeparatorCharset:  charset.SeparatorCharset,
 		ReturnKeyword:     ")",
 		SkipReturnKeyword: "",
 	}
 
 	_curlyBracketExtractor = &extractor{
-		kind:              kind.Keyword,
+		kind:              kind.Raw,
 		SeparatorCharset:  charset.SeparatorCharset,
 		ReturnKeyword:     "}",
 		SkipReturnKeyword: "",

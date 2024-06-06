@@ -179,12 +179,12 @@ func (r funcResetter) handleGeneralFunc(head *Node, returnKinds []kind.Kind, hoo
 			skipAll = jumpTo == nil
 			return true
 		case kind.CurlyBracketLeft:
-			jumpTo = curlyBracketResetter{}.Run(n, hooks...)
+			jumpTo = curlyBracketResetter{skip: true}.Run(n, hooks...)
 			skipAll = jumpTo == nil
 			return true
 		case kind.SquareBracketLeft:
 			isFuncParamHandled = true
-			jumpTo = squareBracketResetter{}.Run(n, hooks...)
+			jumpTo = squareBracketResetter{skip: true}.Run(n, hooks...)
 			skipAll = jumpTo == nil
 			return true
 		default:
@@ -224,7 +224,7 @@ func (r funcResetter) handleParameterFunc(head *Node, hooks ...func(*Node)) *Nod
 	return n
 }
 
-// handleSingleReturnType starts with ' '
+// handleSingleReturnType starts with '\s', ends with '\n' and '\s' and '{'
 func (r funcResetter) handleSingleReturnType(head *Node, hooks ...func(*Node)) *Node {
 	helper.DebugPrint("funcResetter.handleSingleReturnType", "\t\t....", head.DebugText(5))
 	defer helper.DebugPrint("funcResetter.handleSingleReturnType.Returned")
@@ -260,7 +260,7 @@ func (r funcResetter) handleSingleReturnType(head *Node, hooks ...func(*Node)) *
 	return head.IterNext(func(n *Node) bool {
 		handleHook(n, hooks...)
 		switch n.Kind() {
-		case kind.NewLine, kind.Space: // return kind
+		case kind.NewLine, kind.Space, kind.CurlyBracketLeft: // return kind
 			return false
 		case kind.Comment:
 			return true

@@ -137,8 +137,17 @@ func New(s string) Kind {
 		return Package
 	}
 
-	if len(s) == 1 && charset.NumberCharset.Contain(s[0]) {
-		return Number
+	if len(s) != 0 {
+		isNumber := true
+		for i := range s {
+			isNumber = isNumber && charset.NumberCharset.Contain(s[i])
+			if !isNumber {
+				break
+			}
+		}
+		if isNumber {
+			return Number
+		}
 	}
 
 	if len(s) == 1 && charset.SeparatorCharset.Contain(s[0]) {
@@ -157,8 +166,17 @@ func New(s string) Kind {
 		return Basic
 	}
 
-	if charset.GolangSymbol.Contain(s) {
-		return Symbol
+	if len(s) != 0 {
+		isSymbol := true
+		for i := range s {
+			isSymbol = isSymbol && charset.GolangSymbol.Contain(s[i])
+			if !isSymbol {
+				break
+			}
+		}
+		if isSymbol {
+			return Symbol
+		}
 	}
 
 	return Raw

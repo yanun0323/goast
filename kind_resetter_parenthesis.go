@@ -5,7 +5,7 @@ import (
 	"github.com/yanun0323/goast/kind"
 )
 
-// parenthesisResetter starts with '('
+// parenthesisResetter starts with '(', ends with ')'
 type parenthesisResetter struct {
 	skip       bool
 	isReceiver bool
@@ -56,7 +56,7 @@ func (r parenthesisResetter) Run(head *Node, hooks ...func(*Node)) *Node {
 	})
 }
 
-// handleParenthesisParam starts with next of '(' and ','
+// handleParenthesisParam starts with next of '(' and ',', ends with ',' and ')'
 func (r parenthesisResetter) handleParenthesisParam(head *Node, isReceiver bool, hooks ...func(*Node)) *Node {
 	helper.DebugPrint("parenthesisResetter.handleParenthesisParam", "\t\t....", head.DebugText(5))
 	defer helper.DebugPrint("parenthesisResetter.handleParenthesisParam.Returned")
@@ -119,7 +119,7 @@ func (r parenthesisResetter) handleParenthesisParam(head *Node, isReceiver bool,
 	})
 }
 
-// curlyBracketResetter starts with '{'
+// curlyBracketResetter starts with '{', ends with '}'
 type curlyBracketResetter struct {
 	skip bool
 }
@@ -136,7 +136,7 @@ func (r curlyBracketResetter) Run(head *Node, hooks ...func(*Node)) *Node {
 	return head.skipNestNext(kind.CurlyBracketLeft, kind.CurlyBracketRight, hooks...)
 }
 
-// squareBracketResetter
+// squareBracketResetter starts with '[', ends with ']'
 type squareBracketResetter struct {
 	skip bool
 }

@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/yanun0323/goast/assert"
+	"github.com/yanun0323/goast/helper"
 	"github.com/yanun0323/goast/kind"
 )
 
@@ -17,6 +18,8 @@ func TestCommonResetter(t *testing.T) {
 	head, err := extract([]byte(text))
 	a.NoError(err, fmt.Sprintf("extract text, err: %s", err))
 
+	helper.SetDebug(true)
+	defer helper.SetDebug(false)
 	tail := resetKind(head)
 	_ = head.IterNext(func(n *Node) bool {
 		switch n.Text() {
@@ -37,5 +40,5 @@ func TestCommonResetter(t *testing.T) {
 		return true
 	})
 
-	a.Equal(tail.Next(), nil, "tail should be nil")
+	a.Nil(tail, "tail should be nil")
 }
