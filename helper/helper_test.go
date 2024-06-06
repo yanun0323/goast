@@ -1,7 +1,9 @@
 package helper
 
 import (
+	"errors"
 	"fmt"
+	"os"
 	"testing"
 
 	"github.com/yanun0323/goast/assert"
@@ -71,4 +73,11 @@ func TestPrintTidy(t *testing.T) {
 
 	s := "\n \n \n\t\r"
 	a.Equal(TidyText(s), "\\n·\\n·\\n -> ·")
+}
+
+func TestReadFile(t *testing.T) {
+	a := assert.New(t)
+
+	_, err := ReadFile("./empty/no.go")
+	a.Require(errors.Is(err, os.ErrNotExist))
 }

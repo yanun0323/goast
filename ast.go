@@ -3,6 +3,7 @@ package goast
 import (
 	"bytes"
 	"errors"
+	"os"
 	"path/filepath"
 	"strings"
 
@@ -11,7 +12,10 @@ import (
 	"github.com/yanun0323/goast/scope"
 )
 
-var ErrNoPackage = errors.New("out of range")
+var (
+	ErrNoPackage = errors.New("no package name")
+	ErrNotExist  = errors.New("file no exist")
+)
 
 type Ast interface {
 	Package() (string, error)
@@ -29,6 +33,10 @@ type Ast interface {
 func ParseAst(file string) (Ast, error) {
 	data, err := helper.ReadFile(file)
 	if err != nil {
+		if errors.Is(err, os.ErrNotExist) {
+			return nil, ErrNotExist
+		}
+
 		return nil, err
 	}
 
