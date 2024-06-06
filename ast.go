@@ -143,7 +143,7 @@ type ast struct {
 	scope []Scope
 }
 
-func NewAst(scope []Scope) (Ast, error) {
+func NewAst(scope ...Scope) (Ast, error) {
 	if _, err := findPackageName(scope); err != nil {
 		return nil, err
 	}
