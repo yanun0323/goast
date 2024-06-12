@@ -1,28 +1,19 @@
 package assert
 
 import (
-	"os"
 	"reflect"
 	"runtime/debug"
-	"strconv"
 	"strings"
 	"testing"
 )
 
 type Assert struct {
-	t     *testing.T
-	Debug int
+	t *testing.T
 }
 
 func New(t *testing.T) Assert {
-	d, err := strconv.Atoi(os.Getenv("DEBUG"))
-	if err != nil {
-		d = 0
-	}
-
 	return Assert{
-		t:     t,
-		Debug: d,
+		t: t,
 	}
 }
 

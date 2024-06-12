@@ -52,7 +52,6 @@ func (r parenthesisResetter) Run(head *Node, hooks ...func(*Node)) *Node {
 			skipAll = jumpTo == nil
 			return true
 		}
-
 	})
 }
 
@@ -234,8 +233,6 @@ func (r parenthesisResetter2) handleParenthesisParam(head *Node, isReceiver bool
 			return true
 		}
 	})
-
-	
 
 	return returned
 }

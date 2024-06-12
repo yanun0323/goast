@@ -65,7 +65,7 @@ func TestUsecase(t *testing.T) {
 		if s.Line() != 11 {
 			return true
 		}
-		s.Node().DebugPrint()
+		// s.Node().DebugPrint()
 		return true
 	})
 }

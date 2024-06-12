@@ -167,7 +167,7 @@ func (r funcResetter) handleGeneralFunc(head *Node, returnKinds []kind.Kind, hoo
 			}
 			return true
 		case kind.Space:
-			if isFuncParamHandled {
+			if isFuncNameAssigned && isFuncParamHandled {
 				jumpTo = r.handleSingleReturnType(n, hooks...)
 				skipAll = jumpTo == nil
 				return true
