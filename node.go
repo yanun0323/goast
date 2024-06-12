@@ -46,12 +46,29 @@ type Node struct {
 	next *Node
 }
 
+// Copy copies node. keeps original prev/next nodes when 'keepRelationship' equals true.
+func (n *Node) Copy(keepRelationship ...bool) *Node {
+	nn := &Node{
+		line: n.line,
+		kind: n.kind,
+		text: n.text,
+	}
+
+	if len(keepRelationship) != 0 && keepRelationship[0] {
+		nn.prev = n.prev
+		nn.next = n.next
+	}
+
+	return nn
+}
+
 func (n *Node) loop(iter func(*Node) *Node, fn func(*Node) bool) *Node {
 	for nn := n; nn != nil; nn = iter(nn) {
 		if !fn(nn) {
 			return nn
 		}
 	}
+
 	return nil
 }
 

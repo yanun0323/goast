@@ -152,3 +152,90 @@ func (r squareBracketResetter) Run(head *Node, hooks ...func(*Node)) *Node {
 	// TODO: handle generic
 	return head.skipNestNext(kind.SquareBracketLeft, kind.SquareBracketRight, hooks...)
 }
+
+// parenthesisResetter starts with '(', ends with ')'
+type parenthesisResetter2 struct {
+	skip           bool
+	isFuncReceiver bool
+}
+
+func (r parenthesisResetter2) Run(head *Node, hooks ...func(*Node)) *Node {
+	helper.DebugPrint("parenthesisResetter.Run", "\t\t....", head.DebugText(5))
+	defer helper.DebugPrint("parenthesisResetter.Run.Returned")
+
+	if r.skip {
+		return head.skipNestNext(kind.ParenthesisLeft, kind.ParenthesisRight, hooks...)
+	}
+
+	if head.Kind() != kind.ParenthesisLeft {
+		handleHook(head, hooks...)
+		return head.Next()
+	}
+
+	handleHook(head, hooks...)
+	head = head.Next() // skip first '('
+
+	var (
+		skipAll bool
+		jumpTo  *Node
+	)
+
+	return head.IterNext(func(n *Node) bool {
+		handleHook(n, hooks...)
+		if skipAll {
+			return true
+		}
+
+		if jumpTo != nil {
+			if n != jumpTo {
+				return true
+			}
+			jumpTo = nil
+		}
+
+		switch n.Kind() {
+		case kind.ParenthesisRight: // return kind
+			return false
+		case kind.ParenthesisLeft:
+			jumpTo = parenthesisResetter2{}.Run(n, hooks...)
+			skipAll = jumpTo == nil
+			return true
+		case kind.Comment, kind.Comma, kind.Tab, kind.NewLine, kind.Space:
+			return true
+		default:
+			jumpTo = r.handleParenthesisParam(n, r.isFuncReceiver, hooks...)
+			skipAll = jumpTo == nil
+			return true
+		}
+
+	})
+}
+
+// handleParenthesisParam starts with next of '(' and ',', ends with ',' and ')'
+func (r parenthesisResetter2) handleParenthesisParam(head *Node, isReceiver bool, hooks ...func(*Node)) *Node {
+	helper.DebugPrint("parenthesisResetter.handleParenthesisParam", "\t\t....", head.DebugText(5))
+	defer helper.DebugPrint("parenthesisResetter.handleParenthesisParam.Returned")
+
+	collection := []*Node{}
+	returned := head.IterNext(func(n *Node) bool {
+		switch n.Kind() {
+		case kind.Comma, kind.ParenthesisRight:
+			return false
+		case kind.Space:
+			if len(collection) != 0 {
+				collection = append(collection, n)
+			}
+
+			return true
+		case kind.Tab, kind.Comment:
+			return true
+		default:
+			collection = append(collection, n)
+			return true
+		}
+	})
+
+	
+
+	return returned
+}

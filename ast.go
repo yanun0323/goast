@@ -26,6 +26,7 @@ type Ast interface {
 	Scope() []Scope
 	IterScope(func(Scope) bool)
 	SetScope([]Scope) Ast
+	AppendScope(...Scope)
 	String() string
 	Save(string) error
 }
@@ -167,6 +168,10 @@ func (f *ast) SetScope(scope []Scope) Ast {
 		ext:   f.ext,
 		scope: scope,
 	}
+}
+
+func (f *ast) AppendScope(scs ...Scope) {
+	f.scope = append(f.scope, scs...)
 }
 
 func (f *ast) String() string {
