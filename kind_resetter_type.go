@@ -188,7 +188,7 @@ func (r structResetter) Run(head *Node, hooks ...func(*Node)) *Node {
 func (r structResetter) handleStructRow(head *Node, hooks ...func(*Node)) *Node {
 	helper.DebugPrint("funcResetter.handleStructRow", "\t\t....", head.DebugText(5))
 	defer helper.DebugPrint("funcResetter.handleStructRow.Returned")
-	
+
 	var (
 		skipAll bool
 		jumpTo  *Node
@@ -220,12 +220,22 @@ func (r structResetter) handleStructRow(head *Node, hooks ...func(*Node)) *Node 
 				n.SetKind(kind.ParamName)
 				return true
 			}
-			jumpTo = paramResetter{resetKind: kind.ParamType, returnKinds: []kind.Kind{kind.NewLine}}.Run(n, hooks...)
+
+			n.SetKind(kind.ParamType)
+			// jumpTo = paramResetter{resetKind: kind.ParamType, returnKinds: []kind.Kind{kind.NewLine}}.Run(n, hooks...)
+			// skipAll = jumpTo == nil
+			return true
+		case kind.Func:
+			jumpTo = funcResetter{isParameter: true}.Run(n, func(n *Node) {
+				if n.Kind() == kind.Raw {
+					n.SetKind(kind.ParamType)
+				}
+			})
 			skipAll = jumpTo == nil
 			return true
 		default:
-			jumpTo = paramResetter{resetKind: kind.ParamType, returnKinds: []kind.Kind{kind.NewLine}}.Run(n, hooks...)
-			skipAll = jumpTo == nil
+			// jumpTo = paramResetter{resetKind: kind.ParamType, returnKinds: []kind.Kind{kind.NewLine}}.Run(n, hooks...)
+			// skipAll = jumpTo == nil
 			return true
 		}
 	})

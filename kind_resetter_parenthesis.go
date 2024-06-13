@@ -100,7 +100,7 @@ func (r parenthesisResetter) handleParenthesisParam(head *Node, isReceiver bool,
 			jumpTo = funcResetter{isParameter: true}.Run(n, hooks...)
 			skipAll = jumpTo == nil
 			return true
-		case kind.Raw:
+		case kind.Raw, kind.ParamType /* for struct resetter */, kind.ParamName /* for struct resetter */ :
 			if !firstRawHandled {
 				if n.Next().Kind() == kind.Space {
 					n.SetKind(nameKind)
@@ -151,6 +151,8 @@ func (r squareBracketResetter) Run(head *Node, hooks ...func(*Node)) *Node {
 	// TODO: handle generic
 	return head.skipNestNext(kind.SquareBracketLeft, kind.SquareBracketRight, hooks...)
 }
+
+// TODO: Refactor parentheses resetters
 
 // parenthesisResetter starts with '(', ends with ')'
 type parenthesisResetter2 struct {

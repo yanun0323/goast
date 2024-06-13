@@ -30,6 +30,11 @@ var (
 	CurlyBracketRight  = Kind{"}", "CurlyBracketRight"}
 	SquareBracketLeft  = Kind{"[", "SquareBracketLeft"}
 	SquareBracketRight = Kind{"]", "SquareBracketRight"}
+
+	/* symbol */
+	Pointer = Kind{"*", "Pointer"}
+	Address = Kind{"&", "Address"}
+
 	/* keyword */
 	Import    = Kind{"import", "Import"}
 	Var       = Kind{"var", "Var"}
