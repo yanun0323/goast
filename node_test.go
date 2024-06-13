@@ -79,8 +79,82 @@ func TestNilNodeMethod(t *testing.T) {
 	a.NoPanic(func() { n.SetKind(kind.Raw) })
 	a.NoPanic(func() { n.Text() })
 	a.NoPanic(func() { n.Print() })
+	a.NoPanic(func() { n.Copy() })
+	a.NoPanic(func() { n.Copy(true) })
 	a.NoPanic(func() { n.setPrev(nil) })
 	a.NoPanic(func() { n.setNext(nil) })
+}
+
+func TestNewNode(t *testing.T) {
+	a := assert.New(t)
+
+	head := NewNodes(10, "1", "2", "3", "4", "5", "6")
+	tail := head.IterNext(func(n *Node) bool { return n.Next() != nil })
+	head.IterNext(func(n *Node) bool {
+		a.Equal(n.Line(), 10)
+		return true
+	})
+
+	AssertNode(a, head, r, "1", "2", "3", "4", "5", "6")
+	AssertNode(a, head, l, "1")
+	AssertNode(a, tail, r, "6")
+	AssertNode(a, tail, l, "6", "5", "4", "3", "2", "1")
+
+}
+
+func TestCopy(t *testing.T) {
+	a := assert.New(t)
+
+	head := NewNodes(10, "1", "2", "3", "4", "5", "6")
+	tail := head.IterNext(func(n *Node) bool { return n.Next() != nil })
+	n3 := head.Next().Next()
+
+	println("Copy")
+
+	n3c1 := n3.Copy()
+	a.NotEqual(n3, n3c1)
+	a.Nil(n3c1.Prev())
+	a.Nil(n3c1.Next())
+
+	println("Copy(true)")
+
+	n3c := n3.Copy(true)
+	cHead := n3c.IterPrev(func(n *Node) bool { return n.Prev() != nil })
+	cTail := n3c.IterNext(func(n *Node) bool { return n.Next() != nil })
+
+	println("Assert A")
+
+	AssertNode(a, n3c, r, "3", "4", "5", "6")
+	AssertNode(a, n3c, l, "3", "2", "1")
+
+	AssertNode(a, cHead, l, "1")
+	AssertNode(a, cHead, r, "1", "2", "3", "4", "5", "6")
+	AssertNode(a, cTail, r, "6")
+	AssertNode(a, cTail, l, "6", "5", "4", "3", "2", "1")
+
+	println("Assert B")
+
+	foo := head
+	foo.IterNext(func(_ *Node) bool {
+		a.NotEqual(head, cHead)
+		a.Equal(head.Text(), cHead.Text())
+		a.Equal(head.Kind(), cHead.Kind())
+		a.Equal(head.Line(), cHead.Line())
+
+		a.NotEqual(tail, cTail)
+		a.Equal(tail.Text(), cTail.Text())
+		a.Equal(tail.Kind(), cTail.Kind())
+		a.Equal(tail.Line(), cTail.Line())
+
+		head = head.Next()
+		cHead = cHead.Next()
+
+		tail = tail.Prev()
+		cTail = cTail.Prev()
+
+		return true
+	})
+
 }
 
 func TestNodeTake(t *testing.T) {

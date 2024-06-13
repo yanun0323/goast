@@ -46,18 +46,47 @@ type Node struct {
 	next *Node
 }
 
-// Copy copies node. keeps original prev/next nodes when 'keepRelationship' equals true.
-func (n *Node) Copy(keepRelationship ...bool) *Node {
+// Copy copies node.
+//
+// If 'copyRelativeNode' equals true, then copy relative nodes too (prev and next).
+// Otherwise only copies absolute node itself.
+func (n *Node) Copy(copyRelativeNode ...bool) *Node {
+	if n == nil {
+		return nil
+	}
+
+	if len(copyRelativeNode) != 0 && copyRelativeNode[0] {
+		return n.deepCopy(nil, nil)
+	}
+
+	return &Node{
+		line: n.line,
+		kind: n.kind,
+		text: n.text,
+	}
+}
+
+func (n *Node) deepCopy(prev, next *Node) *Node {
+	if n == nil {
+		return nil
+	}
+
 	nn := &Node{
 		line: n.line,
 		kind: n.kind,
 		text: n.text,
 	}
 
-	if len(keepRelationship) != 0 && keepRelationship[0] {
-		nn.prev = n.prev
-		nn.next = n.next
+	if prev == nil {
+		prev = n.Prev().deepCopy(nil, nn)
 	}
+
+	if next == nil {
+		next = n.Next().deepCopy(nn, nil)
+	}
+
+	nn.prev = prev
+	nn.next = next
 
 	return nn
 }
@@ -99,7 +128,7 @@ func (n *Node) Next() *Node {
 // InsertPrev inserts incoming node into current node's before,
 // then returns old previous/next node of incoming node.
 func (n *Node) InsertPrev(nn *Node) (insertedOldPrev *Node, insertedOldNext *Node) {
-	if n.Prev() == nn {
+	if n == nn || n.Prev() == nn {
 		return
 	}
 
@@ -121,7 +150,7 @@ func (n *Node) InsertPrev(nn *Node) (insertedOldPrev *Node, insertedOldNext *Nod
 // InsertNext inserts incoming node into current node's after,
 // then returns old previous/next node of incoming node.
 func (n *Node) InsertNext(nn *Node) (insertedOldPrev *Node, insertedOldNext *Node) {
-	if n.Next() == nn {
+	if n == nn || n.Next() == nn {
 		return
 	}
 
@@ -144,7 +173,7 @@ func (n *Node) InsertNext(nn *Node) (insertedOldPrev *Node, insertedOldNext *Nod
 // then returns the old previous node of current node and
 // the old next node of incoming node.
 func (n *Node) ReplacePrev(nn *Node) (currentOldPrev *Node, replacedOldNext *Node) {
-	if n.Prev() == nn {
+	if n == nn || n.Prev() == nn {
 		return
 	}
 
@@ -163,7 +192,7 @@ func (n *Node) ReplacePrev(nn *Node) (currentOldPrev *Node, replacedOldNext *Nod
 // then returns the old previous node of incoming node and
 // the old next node of current node.
 func (n *Node) ReplaceNext(nn *Node) (replacedOldPrev *Node, currentOldNext *Node) {
-	if n.Next() == nn {
+	if n == nn || n.Next() == nn {
 		return
 	}
 
@@ -243,7 +272,7 @@ func (n *Node) CombinePrev(k kind.Kind, nns ...*Node) *Node {
 	buf := make([]string, 0, len(nns)+1)
 	buf = append(buf, n.Text())
 	for _, nn := range nns {
-		if nn == nil {
+		if nn == nil || n == nn {
 			continue
 		}
 
@@ -278,7 +307,7 @@ func (n *Node) CombineNext(k kind.Kind, nns ...*Node) *Node {
 	buf := make([]string, 0, len(nns)+1)
 	buf = append(buf, n.Text())
 	for _, nn := range nns {
-		if nn == nil {
+		if nn == nil || n == nn {
 			continue
 		}
 
@@ -384,7 +413,7 @@ func (n *Node) DebugPrint(limit ...int) {
 }
 
 func (n *Node) setPrev(nn *Node) {
-	if n == nil {
+	if n == nn || n == nil {
 		return
 	}
 
@@ -397,7 +426,7 @@ func (n *Node) setPrev(nn *Node) {
 }
 
 func (n *Node) setNext(nn *Node) {
-	if n == nil {
+	if n == nn || n == nil {
 		return
 	}
 

@@ -29,6 +29,7 @@ type Ast interface {
 	AppendScope(...Scope)
 	String() string
 	Save(string) error
+	Copy() Ast
 }
 
 func ParseAst(file string) (Ast, error) {
@@ -192,4 +193,19 @@ func (f *ast) Save(file string) error {
 	}
 
 	return helper.SaveFile(file, buf.Bytes())
+}
+
+func (f *ast) Copy() Ast {
+	scs := make([]Scope, 0, len(f.scope))
+	for _, sc := range f.scope {
+		scs = append(scs, sc.Copy())
+	}
+
+	return &ast{
+		file:  f.file,
+		dir:   f.dir,
+		name:  f.name,
+		ext:   f.ext,
+		scope: scs,
+	}
 }

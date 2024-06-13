@@ -26,6 +26,7 @@ type Scope interface {
 	GetFuncName() (string, bool)
 	GetMethodName() (string, bool)
 	GetMethodReceiver() (string, bool)
+	Copy() Scope
 }
 
 func NewScope(line int, kind scope.Kind, node *Node) Scope {
@@ -297,4 +298,12 @@ func (d *scopeStruct) GetMethodReceiver() (string, bool) {
 	})
 
 	return name, found
+}
+
+func (d *scopeStruct) Copy() Scope {
+	return &scopeStruct{
+		line: d.line,
+		kind: d.kind,
+		node: d.node.Copy(true),
+	}
 }
