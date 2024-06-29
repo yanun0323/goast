@@ -127,13 +127,43 @@ func (r interfaceResetter) Run(head *Node, hooks ...func(*Node)) *Node {
 		case kind.Tab, kind.Comment, kind.NewLine, kind.Space, kind.CurlyBracketLeft:
 			return true
 		default:
-			jumpTo = funcResetter{
-				isInterfaceDefinition: true,
-			}.Run(n, hooks...)
+			if r.isThisLineFunction(n) {
+				jumpTo = funcResetter{
+					isInterfaceDefinition: true,
+				}.Run(n, hooks...)
+				skipAll = jumpTo == nil
+				return true
+			}
+
+			if n.Kind() == kind.Raw {
+				n.SetKind(kind.TypeName)
+			}
+
+			jumpTo = n.findNext([]kind.Kind{kind.NewLine, kind.CurlyBracketRight}, findNodeOption{
+				IsOutsideParenthesis:   true,
+				IsOutsideCurlyBracket:  true,
+				IsOutsideSquareBracket: true,
+			}, hooks...)
 			skipAll = jumpTo == nil
 			return true
 		}
 	})
+}
+
+func (interfaceResetter) isThisLineFunction(head *Node) bool {
+	result := false
+	_ = head.IterNext(func(n *Node) bool {
+		switch n.Kind() {
+		case kind.ParenthesisLeft:
+			result = true
+			return false
+		case kind.NewLine:
+			return false
+		default:
+			return true
+		}
+	})
+	return result
 }
 
 // structResetter starts with 'struct'
