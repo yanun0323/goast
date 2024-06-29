@@ -47,6 +47,8 @@ func ReadFile(file string) ([]byte, error) {
 		return nil, err
 	}
 
+	println("BUF:", string(buf))
+
 	formatted, err := format.Source(buf)
 	if err != nil {
 		return nil, err
@@ -67,7 +69,7 @@ func SaveFile(file string, data []byte) error {
 	}
 
 	dir := filepath.Dir(file)
-	if err := os.MkdirAll(dir, 0666); err != nil {
+	if err := os.MkdirAll(dir, 0777); err != nil {
 		return fmt.Errorf("mkdir %s, err: %w", dir, err)
 	}
 
