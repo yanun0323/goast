@@ -63,6 +63,7 @@ func SaveFile(file string, data []byte) error {
 	formatted, err := format.Source(data)
 	if err != nil {
 		slog.Error(fmt.Sprintf("format ast data, err: %+v", err))
+		formatted = data
 	}
 
 	dir := filepath.Dir(file)
