@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"go/format"
 	"io"
+	"log/slog"
 	"os"
 	"path/filepath"
 	"runtime/debug"
@@ -61,7 +62,7 @@ func SaveFile(file string, data []byte) error {
 
 	formatted, err := format.Source(data)
 	if err != nil {
-		return fmt.Errorf("format ast data, err: %w", err)
+		slog.Error(fmt.Sprintf("format ast data, err: %+v", err))
 	}
 
 	dir := filepath.Dir(file)
