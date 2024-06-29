@@ -47,8 +47,6 @@ func ReadFile(file string) ([]byte, error) {
 		return nil, err
 	}
 
-	println("BUF:", string(buf))
-
 	formatted, err := format.Source(buf)
 	if err != nil {
 		return nil, err
