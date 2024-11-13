@@ -64,7 +64,7 @@ func (r parenthesisResetter) handleParenthesisParam(head *Node, isReceiver bool,
 		skipAll bool
 		jumpTo  *Node
 
-		firstRawHandled bool
+		named bool
 	)
 
 	nameKind := kind.ParamName
@@ -73,6 +73,19 @@ func (r parenthesisResetter) handleParenthesisParam(head *Node, isReceiver bool,
 		nameKind = kind.MethodReceiverName
 		typeKind = kind.MethodReceiverType
 	}
+
+	validParamCount := 0
+	head.IterNext(func(n *Node) bool {
+		switch n.Kind() {
+		case kind.Comma, kind.ParenthesisRight:
+			return false
+		case kind.Space, kind.Tab, kind.Comment, kind.NewLine:
+			return true
+		default:
+			validParamCount++
+			return true
+		}
+	})
 
 	return head.IterNext(func(n *Node) bool {
 		handleHook(n, hooks...)
@@ -101,13 +114,14 @@ func (r parenthesisResetter) handleParenthesisParam(head *Node, isReceiver bool,
 			skipAll = jumpTo == nil
 			return true
 		case kind.Raw, kind.ParamType /* for struct resetter */, kind.ParamName /* for struct resetter */ :
-			if !firstRawHandled {
-				if n.Next().Kind() == kind.Space {
-					n.SetKind(nameKind)
-				} else {
-					n.SetKind(typeKind)
-				}
-				firstRawHandled = true
+			if validParamCount == 1 {
+				n.SetKind(typeKind)
+				return true
+			}
+
+			if !named {
+				n.SetKind(nameKind)
+				named = true
 				return true
 			}
 			n.SetKind(typeKind)
@@ -212,6 +226,7 @@ func (r parenthesisResetter2) Run(head *Node, hooks ...func(*Node)) *Node {
 	})
 }
 
+// TODO: more efficient parenthesis handler
 // handleParenthesisParam starts with next of '(' and ',', ends with ',' and ')'
 func (r parenthesisResetter2) handleParenthesisParam(head *Node, isReceiver bool, hooks ...func(*Node)) *Node {
 	helper.DebugPrint("parenthesisResetter.handleParenthesisParam", "\t\t....", head.debugText(5))

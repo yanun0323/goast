@@ -67,7 +67,7 @@ func ParseScope(startLine int, text []byte) ([]Scope, error) {
 	}
 
 	scs := []Scope{}
-	nodesToReset := []*Node{}
+	nodesToResetKind := []*Node{}
 
 	head := node
 	k := scope.Unknown
@@ -75,7 +75,7 @@ func ParseScope(startLine int, text []byte) ([]Scope, error) {
 
 	tryAppendScope := func() {
 		if k != scope.Unknown {
-			nodesToReset = append(nodesToReset, head)
+			nodesToResetKind = append(nodesToResetKind, head)
 			scs = append(scs, NewScope(
 				head.Line(),
 				k,
@@ -108,7 +108,7 @@ func ParseScope(startLine int, text []byte) ([]Scope, error) {
 
 	tryAppendScope()
 
-	for _, n := range nodesToReset {
+	for _, n := range nodesToResetKind {
 		resetKind(n)
 	}
 
@@ -237,7 +237,9 @@ func (d *scopeStruct) GetStructName() (string, bool) {
 		return !isStruct
 	})
 
-	return d.GetTypeName()
+	typeName, _ := d.GetTypeName()
+
+	return typeName, isStruct
 }
 
 func (d *scopeStruct) GetInterfaceName() (string, bool) {
@@ -252,7 +254,9 @@ func (d *scopeStruct) GetInterfaceName() (string, bool) {
 		return !isInterface
 	})
 
-	return d.GetTypeName()
+	typeName, _ := d.GetTypeName()
+
+	return typeName, isInterface
 }
 
 func (d *scopeStruct) GetMethodName() (string, bool) {

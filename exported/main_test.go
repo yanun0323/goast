@@ -1,7 +1,6 @@
 package exported
 
 import (
-	"os"
 	"testing"
 
 	"github.com/yanun0323/goast"
@@ -50,10 +49,6 @@ func TestExample(t *testing.T) {
 	// })
 
 	s := "./output/save_test"
-	if err := os.Remove(s); err != nil {
-		t.Logf("remove file: %s, err: %+v", s, err)
-	}
-
 	if err := ast.Save(s, false); err != nil {
 		t.Fatalf("save ast to file: %s, err: %+v", f, err)
 	}
@@ -67,10 +62,16 @@ func TestUsecase(t *testing.T) {
 	}
 
 	ast.IterScope(func(s goast.Scope) bool {
-		if s.Line() != 11 {
+		if _, ok := s.GetInterfaceName(); !ok {
 			return true
 		}
-		// s.Node().DebugPrint()
+
+		s.Print()
+
+		s.Node().IterNext(func(n *goast.Node) bool {
+			n.Print()
+			return true
+		})
 		return true
 	})
 }

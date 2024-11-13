@@ -10,8 +10,9 @@ import (
 //go:generate domaingen -v -destination=../../usecase/member.go -name=memberUseCase
 type MemberUseCase interface {
 	Start(ctx context.Context, req *UpdatePhoneReq) (res *UpdatePhoneResp, err error)
-	End(ctx context.Context, req *UpdatePhoneReq) (*UpdatePhoneResp, error)
-	Exit(ctx context.Context) error
+	End(context.Context, *UpdatePhoneReq) (*UpdatePhoneResp, error)
+	EndAgain( /* 123 */ context.Context /* 456 */, * /* 789 */ UpdatePhoneReq /* 012 */) /* 345 */ (* /* 678 */ UpdatePhoneResp /* 901 */, error /* 234 */)
+	// Exit(ctx context.Context) error
 }
 
 var (
