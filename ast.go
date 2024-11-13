@@ -18,20 +18,50 @@ var (
 )
 
 type Ast interface {
+	// Package returns the package name.
+	//
+	// If the package name is not found, it returns ErrNoPackage.
 	Package() (string, error)
+
+	// File returns the file path of the ast.
 	File() string
+
+	// Dir returns the directory path of the ast.
 	Dir() string
-	Name() string
+
+	// Name returns the filename of the ast.
+	Filename() string
+
+	// Ext returns the file extension of the ast.
 	Ext() string
+
+	// Scope returns the scope of the ast.
 	Scope() []Scope
+
+	// IterScope iterates over the scope of the ast.
 	IterScope(func(Scope) bool)
+
+	// SetScope sets the given scope to the copy of the ast.
 	SetScope([]Scope) Ast
+
+	// AppendScope appends the given scope to the ast.
 	AppendScope(...Scope)
-	String() string
-	Save(string) error
+
+	// Description returns a description of the ast.
+	Description() string
+
+	// Save saves the ast to the given file.
+	Save(file string) error
+
+	// Copy returns a copy of the ast
 	Copy() Ast
 }
 
+// ParseAst parses the given file and returns an Ast.
+//
+// If the file does not exist, it returns ErrNotExist.
+//
+// If the file is not a valid Go file, it returns ErrInvalidFile.
 func ParseAst(file string) (Ast, error) {
 	data, err := helper.ReadFile(file)
 	if err != nil {
@@ -99,6 +129,7 @@ type ast struct {
 	scope []Scope
 }
 
+// NewAst creates a new Ast with the given scope.
 func NewAst(scope ...Scope) (Ast, error) {
 	if _, err := findPackageName(scope); err != nil {
 		return nil, err
@@ -129,7 +160,7 @@ func (f *ast) Dir() string {
 	return f.dir
 }
 
-func (f *ast) Name() string {
+func (f *ast) Filename() string {
 	if f == nil {
 		return ""
 	}
@@ -175,11 +206,16 @@ func (f *ast) AppendScope(scs ...Scope) {
 	f.scope = append(f.scope, scs...)
 }
 
-func (f *ast) String() string {
+func (f *ast) Description() string {
 	buf := strings.Builder{}
 
 	for _, sc := range f.Scope() {
-		buf.WriteString(sc.Text())
+		buf.WriteString(sc.Description())
+
+		sc.Node().IterNext(func(n *Node) bool {
+			buf.WriteString(n.Description())
+			return true
+		})
 	}
 
 	return buf.String()
@@ -189,7 +225,10 @@ func (f *ast) Save(file string) error {
 	buf := bytes.Buffer{}
 
 	for _, sc := range f.Scope() {
-		buf.WriteString(sc.Text())
+		sc.Node().IterNext(func(n *Node) bool {
+			buf.WriteString(n.Text())
+			return true
+		})
 	}
 
 	return helper.SaveFile(file, buf.Bytes())

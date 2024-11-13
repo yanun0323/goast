@@ -31,7 +31,7 @@ type funcResetter struct {
 }
 
 func (r funcResetter) Run(head *Node, hooks ...func(*Node)) *Node {
-	helper.DebugPrint("funcResetter.Run", "\t\t....", head.DebugText(5))
+	helper.DebugPrint("funcResetter.Run", "\t\t....", head.debugText(5))
 	defer helper.DebugPrint("funcResetter.Run.Returned")
 
 	if r.isParameter {
@@ -116,7 +116,7 @@ func (r funcResetter) Run(head *Node, hooks ...func(*Node)) *Node {
 
 // handleTemporaryFunc starts with 'func' or next of 'func'
 func (r funcResetter) handleGeneralFunc(head *Node, returnKinds []kind.Kind, hooks ...func(*Node)) *Node {
-	helper.DebugPrint("funcResetter.handleGeneralFunc", "\t\t....", head.DebugText(5))
+	helper.DebugPrint("funcResetter.handleGeneralFunc", "\t\t....", head.debugText(5))
 	defer helper.DebugPrint("funcResetter.handleGeneralFunc.Returned")
 
 	var (
@@ -213,7 +213,7 @@ func (r funcResetter) isTemporaryFunc(head *Node) bool {
 
 // handleParameterFunc starts with 'func'
 func (r funcResetter) handleParameterFunc(head *Node, hooks ...func(*Node)) *Node {
-	helper.DebugPrint("funcResetter.handleParameterFunc", "\t\t....", head.DebugText(5))
+	helper.DebugPrint("funcResetter.handleParameterFunc", "\t\t....", head.debugText(5))
 	defer helper.DebugPrint("funcResetter.handleParameterFunc.Returned")
 
 	n := r.handleGeneralFunc(head, []kind.Kind{kind.Comma, kind.ParenthesisRight, kind.NewLine}, hooks...)
@@ -226,7 +226,7 @@ func (r funcResetter) handleParameterFunc(head *Node, hooks ...func(*Node)) *Nod
 
 // handleSingleReturnType starts with '\s', ends with '\n' and '\s' and '{'
 func (r funcResetter) handleSingleReturnType(head *Node, hooks ...func(*Node)) *Node {
-	helper.DebugPrint("funcResetter.handleSingleReturnType", "\t\t....", head.DebugText(5))
+	helper.DebugPrint("funcResetter.handleSingleReturnType", "\t\t....", head.debugText(5))
 	defer helper.DebugPrint("funcResetter.handleSingleReturnType.Returned")
 
 	if head.Kind() != kind.Space {

@@ -112,7 +112,7 @@ type paramResetter struct {
 }
 
 func (r paramResetter) Run(head *Node, hooks ...func(*Node)) *Node {
-	helper.DebugPrint("paramResetter.Run", "\t\t....", head.DebugText(5))
+	helper.DebugPrint("paramResetter.Run", "\t\t....", head.debugText(5))
 	defer helper.DebugPrint("paramResetter.Run.Returned")
 
 	var (

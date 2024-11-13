@@ -1,8 +1,7 @@
 package goast
 
 import (
-	"sort"
-	"strings"
+	"fmt"
 
 	"github.com/yanun0323/goast/kind"
 	"github.com/yanun0323/goast/scope"
@@ -14,21 +13,44 @@ Scope means the first level declaration of a go file.
 It could be a package/comment/import/var/const/type/func.
 */
 type Scope interface {
+	// Kind returns the kind of the scope.
 	Kind() scope.Kind
-	Line() int
-	Print()
-	Node() *Node
-	Text() string
 
+	// Line returns the line number of the scope.
+	Line() int
+
+	// Description returns a description of the scope.
+	Description() string
+
+	// Print prints the description of the scope.
+	Print()
+
+	// Node returns the root node of the scope.
+	Node() *Node
+
+	// GetTypeName returns the type name of the scope if the scope is a type.
 	GetTypeName() (string, bool)
+
+	// GetStructName returns the struct name of the scope if the scope is a struct.
 	GetStructName() (string, bool)
+
+	// GetInterfaceName returns the interface name of the scope if the scope is a interface.
 	GetInterfaceName() (string, bool)
+
+	// GetFuncName returns the func name of the scope if the scope is a func.
 	GetFuncName() (string, bool)
+
+	// GetMethodName returns the method name of the scope if the scope is a method.
 	GetMethodName() (string, bool)
+
+	// GetMethodReceiver returns the method receiver of the scope if the scope is a method.
 	GetMethodReceiver() (string, bool)
+
+	// Copy returns a copy of the scope.
 	Copy() Scope
 }
 
+// NewScope creates a new Scope.
 func NewScope(line int, kind scope.Kind, node *Node) Scope {
 	return &scopeStruct{
 		line: line,
@@ -37,6 +59,7 @@ func NewScope(line int, kind scope.Kind, node *Node) Scope {
 	}
 }
 
+// ParseScope parses the given text into scopes.
 func ParseScope(startLine int, text []byte) ([]Scope, error) {
 	node, err := extract(text)
 	if err != nil {
@@ -118,42 +141,16 @@ func (d *scopeStruct) Node() *Node {
 	return d.node
 }
 
-func (d *scopeStruct) Print() {
+func (d *scopeStruct) Description() string {
 	if d == nil {
-		return
+		return ""
 	}
 
-	println(d.Line()+1, "....", "Scope."+d.kind.String())
-
-	buf := map[int][]string{}
-	lines := []int{}
-	_ = d.Node().IterNext(func(n *Node) bool {
-		if _, ok := buf[n.Line()]; !ok {
-			lines = append(lines, n.Line())
-		}
-		buf[n.Line()] = append(buf[n.Line()], n.Text())
-
-		return true
-	})
-
-	sort.Slice(lines, func(i, j int) bool {
-		return lines[i] < lines[j]
-	})
-
-	for _, l := range lines {
-		println("\t", l+1, "....", strings.Join(buf[l], ""))
-	}
+	return fmt.Sprintf("%d .... *Scope.%s", d.Line()+1, d.kind.String())
 }
 
-func (d *scopeStruct) Text() string {
-	buf := strings.Builder{}
-
-	d.Node().IterNext(func(n *Node) bool {
-		buf.WriteString(n.Text())
-		return true
-	})
-
-	return buf.String()
+func (d *scopeStruct) Print() {
+	println(d.Description())
 }
 
 func newScopeKind(s string) scope.Kind {

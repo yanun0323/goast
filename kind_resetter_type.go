@@ -11,7 +11,7 @@ import (
 type typeResetter struct{}
 
 func (r typeResetter) Run(head *Node, hooks ...func(*Node)) *Node {
-	helper.DebugPrint("typeResetter.Run", "\t\t....", head.DebugText(5))
+	helper.DebugPrint("typeResetter.Run", "\t\t....", head.debugText(5))
 	defer helper.DebugPrint("typeResetter.Run.Returned")
 
 	if head.Kind() != kind.Type {
@@ -99,7 +99,7 @@ func (r typeResetter) Run(head *Node, hooks ...func(*Node)) *Node {
 type interfaceResetter struct{}
 
 func (r interfaceResetter) Run(head *Node, hooks ...func(*Node)) *Node {
-	helper.DebugPrint("interfaceResetter.Run", "\t\t....", head.DebugText(5))
+	helper.DebugPrint("interfaceResetter.Run", "\t\t....", head.debugText(5))
 	defer helper.DebugPrint("interfaceResetter.Run.Returned")
 
 	var (
@@ -172,7 +172,7 @@ func (interfaceResetter) isThisLineFunction(head *Node) bool {
 type structResetter struct{}
 
 func (r structResetter) Run(head *Node, hooks ...func(*Node)) *Node {
-	helper.DebugPrint("structResetter.Run", "\t\t....", head.DebugText(5))
+	helper.DebugPrint("structResetter.Run", "\t\t....", head.debugText(5))
 	defer helper.DebugPrint("structResetter.Run.Returned")
 
 	var (
@@ -216,7 +216,7 @@ func (r structResetter) Run(head *Node, hooks ...func(*Node)) *Node {
 //
 //   - a, b, c struct{}
 func (r structResetter) handleStructRow(head *Node, hooks ...func(*Node)) *Node {
-	helper.DebugPrint("funcResetter.handleStructRow", "\t\t....", head.DebugText(5))
+	helper.DebugPrint("funcResetter.handleStructRow", "\t\t....", head.debugText(5))
 	defer helper.DebugPrint("funcResetter.handleStructRow.Returned")
 
 	var (

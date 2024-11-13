@@ -12,7 +12,7 @@ type parenthesisResetter struct {
 }
 
 func (r parenthesisResetter) Run(head *Node, hooks ...func(*Node)) *Node {
-	helper.DebugPrint("parenthesisResetter.Run", "\t\t....", head.DebugText(5))
+	helper.DebugPrint("parenthesisResetter.Run", "\t\t....", head.debugText(5))
 	defer helper.DebugPrint("parenthesisResetter.Run.Returned")
 
 	if r.skip {
@@ -57,7 +57,7 @@ func (r parenthesisResetter) Run(head *Node, hooks ...func(*Node)) *Node {
 
 // handleParenthesisParam starts with next of '(' and ',', ends with ',' and ')'
 func (r parenthesisResetter) handleParenthesisParam(head *Node, isReceiver bool, hooks ...func(*Node)) *Node {
-	helper.DebugPrint("parenthesisResetter.handleParenthesisParam", "\t\t....", head.DebugText(5))
+	helper.DebugPrint("parenthesisResetter.handleParenthesisParam", "\t\t....", head.debugText(5))
 	defer helper.DebugPrint("parenthesisResetter.handleParenthesisParam.Returned")
 
 	var (
@@ -124,7 +124,7 @@ type curlyBracketResetter struct {
 }
 
 func (r curlyBracketResetter) Run(head *Node, hooks ...func(*Node)) *Node {
-	helper.DebugPrint("curlyBracketResetter.Run", "\t\t....", head.DebugText(5))
+	helper.DebugPrint("curlyBracketResetter.Run", "\t\t....", head.debugText(5))
 	defer helper.DebugPrint("curlyBracketResetter.Run.Returned")
 
 	if r.skip {
@@ -141,7 +141,7 @@ type squareBracketResetter struct {
 }
 
 func (r squareBracketResetter) Run(head *Node, hooks ...func(*Node)) *Node {
-	helper.DebugPrint("squareBracketResetter.Run", "\t\t....", head.DebugText(5))
+	helper.DebugPrint("squareBracketResetter.Run", "\t\t....", head.debugText(5))
 	defer helper.DebugPrint("squareBracketResetter.Run.Returned")
 
 	if r.skip {
@@ -161,7 +161,7 @@ type parenthesisResetter2 struct {
 }
 
 func (r parenthesisResetter2) Run(head *Node, hooks ...func(*Node)) *Node {
-	helper.DebugPrint("parenthesisResetter.Run", "\t\t....", head.DebugText(5))
+	helper.DebugPrint("parenthesisResetter.Run", "\t\t....", head.debugText(5))
 	defer helper.DebugPrint("parenthesisResetter.Run.Returned")
 
 	if r.skip {
@@ -214,7 +214,7 @@ func (r parenthesisResetter2) Run(head *Node, hooks ...func(*Node)) *Node {
 
 // handleParenthesisParam starts with next of '(' and ',', ends with ',' and ')'
 func (r parenthesisResetter2) handleParenthesisParam(head *Node, isReceiver bool, hooks ...func(*Node)) *Node {
-	helper.DebugPrint("parenthesisResetter.handleParenthesisParam", "\t\t....", head.DebugText(5))
+	helper.DebugPrint("parenthesisResetter.handleParenthesisParam", "\t\t....", head.debugText(5))
 	defer helper.DebugPrint("parenthesisResetter.handleParenthesisParam.Returned")
 
 	collection := []*Node{}

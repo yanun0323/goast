@@ -78,7 +78,7 @@ func TestNilNodeMethod(t *testing.T) {
 	a.NoPanic(func() { n.Kind() })
 	a.NoPanic(func() { n.SetKind(kind.Raw) })
 	a.NoPanic(func() { n.Text() })
-	a.NoPanic(func() { n.Print() })
+	a.NoPanic(func() { n.Description() })
 	a.NoPanic(func() { n.Copy() })
 	a.NoPanic(func() { n.Copy(true) })
 	a.NoPanic(func() { n.setPrev(nil) })

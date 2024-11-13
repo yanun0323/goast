@@ -1,6 +1,7 @@
 package goast
 
 import (
+	"fmt"
 	"slices"
 	"strings"
 
@@ -13,6 +14,7 @@ import (
 Node stands for any element in go language.
 */
 
+// NewNode creates a new Node.
 func NewNode(line int, text string, kinds ...kind.Kind) *Node {
 	if len(kinds) != 0 {
 		return &Node{line: line, kind: kinds[0], text: text}
@@ -21,22 +23,24 @@ func NewNode(line int, text string, kinds ...kind.Kind) *Node {
 	return &Node{line: line, kind: kind.New(text), text: text}
 }
 
-func NewNodes(line int, texts ...string) *Node {
+// NewNodes creates a chain of nodes.
+func NewNodes(startLine int, texts ...string) *Node {
 	if len(texts) == 0 {
 		return nil
 	}
 
-	head := NewNode(line, texts[0])
+	head := NewNode(startLine, texts[0])
 	cur := head
 	for _, text := range texts[1:] {
-		cur.InsertNext(NewNode(line, text))
+		cur.InsertNext(NewNode(startLine, text))
 		cur = cur.Next()
-		line += strings.Count(text, "\n")
+		startLine += strings.Count(text, "\n")
 	}
 
 	return head
 }
 
+// Node represents a structure.
 type Node struct {
 	line int
 	kind kind.Kind
@@ -49,7 +53,7 @@ type Node struct {
 // Copy copies node.
 //
 // If 'copyRelativeNode' equals true, then copy relative nodes too (prev and next).
-// Otherwise only copies absolute node itself.
+// Otherwise only copies absolute node itself without prev and next.
 func (n *Node) Copy(copyRelativeNode ...bool) *Node {
 	if n == nil {
 		return nil
@@ -101,14 +105,17 @@ func (n *Node) loop(iter func(*Node) *Node, fn func(*Node) bool) *Node {
 	return nil
 }
 
+// IterPrev iterates over the previous nodes of the node.
 func (n *Node) IterPrev(fn func(*Node) bool) *Node {
 	return n.loop(func(nn *Node) *Node { return nn.Prev() }, fn)
 }
 
+// IterNext iterates over the next nodes of the node.
 func (n *Node) IterNext(fn func(*Node) bool) *Node {
 	return n.loop(func(nn *Node) *Node { return nn.Next() }, fn)
 }
 
+// Prev returns the previous node of the node.
 func (n *Node) Prev() *Node {
 	if n != nil {
 		return n.prev
@@ -117,6 +124,7 @@ func (n *Node) Prev() *Node {
 	return nil
 }
 
+// Next returns the next node of the node.
 func (n *Node) Next() *Node {
 	if n != nil {
 		return n.next
@@ -207,7 +215,7 @@ func (n *Node) ReplaceNext(nn *Node) (replacedOldPrev *Node, currentOldNext *Nod
 	return oldPrev, oldNext
 }
 
-// TakePrev takes the single node after current node, and connects leftover node.
+// TakePrev takes the single node before current node, and connects leftover node.
 func (n *Node) TakePrev() *Node {
 	removed := n.Prev()
 	newPrev := removed.Prev()
@@ -221,7 +229,7 @@ func (n *Node) TakePrev() *Node {
 	return removed
 }
 
-// TakeNext takes the single node before current node, and connects leftover node.
+// TakeNext takes the single node after current node, and connects leftover node.
 func (n *Node) TakeNext() *Node {
 	removed := n.Next()
 	newNext := removed.Next()
@@ -235,7 +243,7 @@ func (n *Node) TakeNext() *Node {
 	return removed
 }
 
-// RemovePrev removes node after current node, and returns removed node with it's all previous node.
+// RemovePrev removes node previous current node, and returns removed node with it's all previous node.
 func (n *Node) RemovePrev() *Node {
 	removed := n.Prev()
 	n.setPrev(nil)
@@ -330,6 +338,7 @@ func (n *Node) Isolate() {
 	n.setNext(nil)
 }
 
+// Line returns the line number of the node.
 func (n *Node) Line() int {
 	if n == nil {
 		return -2
@@ -338,6 +347,7 @@ func (n *Node) Line() int {
 	return n.line
 }
 
+// Kind returns the kind of the node.
 func (n *Node) Kind() kind.Kind {
 	if n == nil {
 		return kind.None
@@ -346,12 +356,14 @@ func (n *Node) Kind() kind.Kind {
 	return n.kind
 }
 
+// SetKind sets the kind of the node.
 func (n *Node) SetKind(k kind.Kind) {
 	if n != nil {
 		n.kind = k
 	}
 }
 
+// Text returns the raw text of the node.
 func (n *Node) Text() string {
 	if n == nil {
 		return ""
@@ -359,15 +371,18 @@ func (n *Node) Text() string {
 	return n.text
 }
 
-func (n *Node) DebugText(limit ...int) string {
+func (n *Node) debugText(nextCount ...uint) string {
 	if n == nil {
 		return ""
 	}
 
-	buf := strings.Builder{}
-	count := 1
-	if len(limit) != 0 {
-		count = limit[0]
+	var (
+		buf   strings.Builder
+		count uint = 1
+	)
+
+	if len(nextCount) != 0 {
+		count += nextCount[0]
 	}
 
 	n.IterNext(func(n *Node) bool {
@@ -378,6 +393,7 @@ func (n *Node) DebugText(limit ...int) string {
 	return buf.String()
 }
 
+// SetText sets the raw text of the node.
 func (n *Node) SetText(text string) {
 	if n == nil {
 		return
@@ -385,31 +401,20 @@ func (n *Node) SetText(text string) {
 	n.text = text
 }
 
-func (n *Node) Print() {
+// Description returns node description.
+//
+// It returns "<nil>" if node is nil.
+func (n *Node) Description() string {
 	if n == nil {
-		println("\t", "<nil>")
+		return "<nil>"
 	}
 
-	println("\t", n.Line()+1, "....", helper.TidyText(n.Text()), "....", "*Node."+n.Kind().String())
-	// println("\t", n.Line()+1, " ....", "*Node."+n.Kind().String(), "....", printTidy(n.Text()))
+	return fmt.Sprintf("%d .... %s .... *Node.%s", n.Line()+1, helper.TidyText(n.Text()), n.Kind().String())
 }
 
-func (n *Node) DebugPrint(limit ...int) {
-	var (
-		count    int
-		hasLimit bool
-	)
-	if len(limit) != 0 {
-		count = limit[0]
-		hasLimit = true
-	}
-	n.IterNext(func(n *Node) bool {
-		n.Print()
-		if hasLimit {
-			count--
-		}
-		return !(hasLimit && count == 0)
-	})
+// Print prints the description of the node.
+func (n *Node) Print() {
+	println("\t", n.Description())
 }
 
 func (n *Node) setPrev(nn *Node) {
@@ -417,7 +422,7 @@ func (n *Node) setPrev(nn *Node) {
 		return
 	}
 
-	// TODO: how to prevent no gc
+	// TODO: how to prevent leak (no gc)
 	if n.prev != nil {
 		n.prev.next = nil
 	}
@@ -430,7 +435,7 @@ func (n *Node) setNext(nn *Node) {
 		return
 	}
 
-	// TODO: how to prevent no gc
+	// TODO: how to prevent leak (no gc)
 	if n.next != nil {
 		n.next.prev = nil
 	}
