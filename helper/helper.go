@@ -73,7 +73,7 @@ func SaveFile(file string, data []byte, autoImport ...bool) error {
 	)
 
 	if len(autoImport) != 0 && autoImport[0] {
-		formatted, err = imports.Process(file, formatted, nil)
+		formatted, err = imports.Process(file, data, nil)
 		if err != nil {
 			slog.Error(fmt.Sprintf("imports ast data, err: %+v", err))
 			formatted = data
