@@ -1,6 +1,7 @@
 package helper
 
 import (
+	"errors"
 	"fmt"
 	"go/format"
 	"io"
@@ -9,6 +10,8 @@ import (
 	"path/filepath"
 	"runtime/debug"
 	"strings"
+
+	"golang.org/x/tools/imports"
 )
 
 var (
@@ -55,15 +58,32 @@ func ReadFile(file string) ([]byte, error) {
 	return formatted, nil
 }
 
-func SaveFile(file string, data []byte) error {
+func SaveFile(file string, data []byte, autoImport ...bool) error {
+	if len(data) == 0 {
+		return errors.New("save empty data")
+	}
+
 	if !HasSuffix([]byte(file), ".go") {
 		file = file + ".go"
 	}
 
-	formatted, err := format.Source(data)
-	if err != nil {
-		slog.Error(fmt.Sprintf("format ast data, err: %+v", err))
-		formatted = data
+	var (
+		formatted []byte
+		err       error
+	)
+
+	if len(autoImport) != 0 && autoImport[0] {
+		formatted, err = imports.Process(file, formatted, nil)
+		if err != nil {
+			slog.Error(fmt.Sprintf("imports ast data, err: %+v", err))
+			formatted = data
+		}
+	} else {
+		formatted, err = format.Source(data)
+		if err != nil {
+			slog.Error(fmt.Sprintf("format ast data, err: %+v", err))
+			formatted = data
+		}
 	}
 
 	dir := filepath.Dir(file)

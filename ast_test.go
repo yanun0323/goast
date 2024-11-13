@@ -18,14 +18,14 @@ func TestParse(t *testing.T) {
 		for _, sc := range ff.Scope() {
 			_ = sc
 			// sc.Print()
-			println(sc.Kind().String())
-			sc.Node().Print()
-			sc.Node().IterNext(func(n *Node) bool {
-				if n != nil {
-					n.Print()
-				}
-				return n != nil
-			})
+			// println(sc.Kind().String())
+			// sc.Node().Print()
+			// sc.Node().IterNext(func(n *Node) bool {
+			// 	if n != nil {
+			// 		n.Print()
+			// 	}
+			// 	return n != nil
+			// })
 		}
 	}
 

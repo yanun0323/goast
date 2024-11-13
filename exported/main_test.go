@@ -1,6 +1,7 @@
-package example
+package exported
 
 import (
+	"os"
 	"testing"
 
 	"github.com/yanun0323/goast"
@@ -9,7 +10,7 @@ import (
 )
 
 func TestExample(t *testing.T) {
-	f := "sample_test.go"
+	f := "./sample_test.go"
 	ast, err := goast.ParseAst(f)
 	if err != nil {
 		t.Fatalf("parse ast from file: %s, err: %+v", f, err)
@@ -19,7 +20,7 @@ func TestExample(t *testing.T) {
 
 	ast.IterScope(func(s goast.Scope) bool {
 		switch s.Kind() {
-		case scope.Type, scope.Func, scope.Package, scope.Import:
+		case scope.Const, scope.Variable, scope.Type, scope.Func, scope.Package, scope.Import:
 			takePrev := false
 			s.Node().IterNext(func(n *goast.Node) bool {
 				if takePrev {
@@ -48,8 +49,12 @@ func TestExample(t *testing.T) {
 	// 	return true
 	// })
 
-	s := "output/save_test"
-	if err := ast.Save(s); err != nil {
+	s := "./output/save_test"
+	if err := os.Remove(s); err != nil {
+		t.Logf("remove file: %s, err: %+v", s, err)
+	}
+
+	if err := ast.Save(s, false); err != nil {
 		t.Fatalf("save ast to file: %s, err: %+v", f, err)
 	}
 }

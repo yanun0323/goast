@@ -1,20 +1,22 @@
 // This is a sample file to test ast.
 //
 // This is the package comment.
-package example
+package exported
 
 import (
 	"context"
 	"errors"
+
+	"github.com/yanun0323/goast/exported/enum"
 )
 
 /* comment */
 var ( /* comment */
-	num1       = /* comment */ 5 /* comment */
-	num2       = int64(5 /* comment */)
-	num3 int64 = 5
-	num4 int64 = int64(5)
-	num5 int64 = int64(int(5))
+	num1             = /* comment */ 5 /* comment */
+	num2             = int64(5 /* comment */)
+	num3 enum.Number = 5
+	num4 int64       = int64(5)
+	num5 int64       = int64(int(5))
 
 	/* comment */
 	array1 = [2]int{1 /* comment */, 2 /* comment */} /*

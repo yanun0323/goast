@@ -51,7 +51,9 @@ type Ast interface {
 	Description() string
 
 	// Save saves the ast to the given file.
-	Save(file string) error
+	//
+	// If the autoImport equals true, it will auto import the package.
+	Save(file string, autoImport ...bool) error
 
 	// Copy returns a copy of the ast
 	Copy() Ast
@@ -221,7 +223,7 @@ func (f *ast) Description() string {
 	return buf.String()
 }
 
-func (f *ast) Save(file string) error {
+func (f *ast) Save(file string, autoImport ...bool) error {
 	buf := bytes.Buffer{}
 
 	for _, sc := range f.Scope() {
@@ -231,7 +233,7 @@ func (f *ast) Save(file string) error {
 		})
 	}
 
-	return helper.SaveFile(file, buf.Bytes())
+	return helper.SaveFile(file, buf.Bytes(), autoImport...)
 }
 
 func (f *ast) Copy() Ast {
