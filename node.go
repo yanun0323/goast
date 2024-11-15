@@ -133,6 +133,16 @@ func (n *Node) Next() *Node {
 	return nil
 }
 
+// First returns the first node of the node.
+func (n *Node) First() *Node {
+	return n.IterPrev(func(n *Node) bool { return true })
+}
+
+// Last returns the last node of the node.
+func (n *Node) Last() *Node {
+	return n.IterNext(func(n *Node) bool { return true })
+}
+
 // InsertPrev inserts incoming node into current node's before,
 // then returns old previous/next node of incoming node.
 func (n *Node) InsertPrev(nn *Node) (insertedOldPrev *Node, insertedOldNext *Node) {
