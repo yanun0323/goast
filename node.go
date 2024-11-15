@@ -106,11 +106,15 @@ func (n *Node) loop(iter func(*Node) *Node, fn func(*Node) bool) *Node {
 }
 
 // IterPrev iterates over the previous nodes of the node.
+//
+// return the node that the iteration stopped at.
 func (n *Node) IterPrev(fn func(*Node) bool) *Node {
 	return n.loop(func(nn *Node) *Node { return nn.Prev() }, fn)
 }
 
 // IterNext iterates over the next nodes of the node.
+//
+// return the node that the iteration stopped at.
 func (n *Node) IterNext(fn func(*Node) bool) *Node {
 	return n.loop(func(nn *Node) *Node { return nn.Next() }, fn)
 }
